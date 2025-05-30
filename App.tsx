@@ -1,131 +1,70 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useEffect, useState, createContext, useContext } from 'react';
+import { View, Text, Button, StyleSheet, StatusBar, SafeAreaView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from './src/context/AuthContext';
+import { LoginPage } from './src/Pages/LoginPage'
+import { RegisterPage } from './src/Pages/RegisterPage';
+import { HomePage } from './src/Pages/HomePage';
+import { NotesPage } from './src/Pages/NotesPage';
+import { NotePage } from './src/Pages/NotePage';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { MapPage } from './src/Pages/MapPage';
+import { ChaptersPage } from './src/Pages/ChaptersPage';
+import { ChapterPage } from './src/Pages/ChapterPage';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+// emulator -avd Medium_Phone_API_36.0
+// npx react-native run-android
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const Stack = createNativeStackNavigator();
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
 
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the recommendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+export default function App() {
+  const [token, setToken] = useState<string | null>(null);
+  const [currentScreen, setCurrentScreen] = useState('home');
+
+  useEffect(() => {
+    AsyncStorage.getItem('jwtToken').then(savedToken => {
+      if (savedToken) {
+        setToken(savedToken);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    // Сохраняем токен при изменении
+    if (token) {
+      AsyncStorage.setItem('jwtToken', token);
+    } else {
+      AsyncStorage.removeItem('jwtToken');
+    }
+  }, [token]);
+
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </View>
+    <AuthContext.Provider value={{ token, setToken }}>
+      <StatusBar barStyle="light-content" />
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="ChapterPage" screenOptions={{ headerShown: false }}>
+          <Stack.Screen name='ChaptersPage' component={ChaptersPage} />
+          <Stack.Screen name='ChapterPage' component={ChapterPage} />
+          <Stack.Screen name="NotesPage" component={NotesPage} />
+          <Stack.Screen name="NotePage" component={NotePage} />
+          <Stack.Screen name="MapPage" component={MapPage} />
+          <Stack.Screen name="LoginPage" component={LoginPage} />
+          <Stack.Screen name="RegisterPage" component={RegisterPage} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthContext.Provider>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  container: {
+    flex: 1,
+    backgroundColor: '#E9F9FF',
   },
 });
-
-export default App;

@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import uuid from 'react-native-uuid';
 
 class NoteRepository {
   static async create(db, note, sectionId) {
@@ -9,7 +9,7 @@ class NoteRepository {
      * @returns {Promise<Object>} - Созданная заметка.
      */
     return new Promise((resolve, reject) => {
-      const id = uuidv4();
+      const id = uuid.v4();
       const serializedMap = note.map ? JSON.stringify(note.map) : null;
       db.transaction(tx => {
         tx.executeSql(
@@ -64,17 +64,14 @@ class NoteRepository {
   }
 
   static async getAll(db, sectionId) {
-    /**
-     * Получает все заметки в разделе.
-     * @param {string} sectionId - UUID раздела.
-     * @returns {Promise<Array>} - Список заметок.
-     */
     return new Promise((resolve, reject) => {
       db.transaction(tx => {
         tx.executeSql(
           'SELECT * FROM notes WHERE section_id = ?',
           [sectionId],
           (_, { rows }) => {
+            // console.log('Raw rows:', rows);
+
             const notes = rows.raw().map(note => ({
               ...note,
               map: note.map ? JSON.parse(note.map) : null
@@ -86,6 +83,7 @@ class NoteRepository {
       }, reject);
     });
   }
+
 
   static async get(db, noteId, sectionId) {
     /**

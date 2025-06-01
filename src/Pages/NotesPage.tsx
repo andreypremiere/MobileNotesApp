@@ -1,19 +1,21 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import Logo from '../assets/icons/account.svg';
 import { Note } from '../components/Note';
 import Back from '../assets/icons/button-back.svg';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import Plus from '../assets/icons/Plus.svg';
 import { AuthContext } from '../context/AuthContext';
 import { getNotes, updateNote } from '../utils/requests';
-
+import { useDatabase } from '../context/databaseContext';
+import NoteRepository from '../utils/noteRepo';
 
 
 export function NotesPage() {
   const { token } = useContext(AuthContext)
   const route = useRoute();
   const { chapterId } = route.params;
+  const db = useDatabase();
 
   // const [notes, setNotes] = useState([])
   const [notes, setNotes] = useState([]);
@@ -24,12 +26,27 @@ export function NotesPage() {
       const result = await getNotes(chapterId, token)
       setNotes(result)
     }
+    if (db) {
+      try {
+        console.log('chapterId', chapterId)
+        const result = await NoteRepository.getAll(db, chapterId)
+        console.log('Получены заметки', result)
+        if (!token) {
+          setNotes(result)
+        }
+      }
+      catch (error) {
+        console.log('Ошибка при получении в sqlite', error)
+      }
+    }
 
   }
 
-  useEffect(() => {
-    updateNotes();
-  }, [])
+  useFocusEffect(
+    useCallback(() => {
+      updateNotes();
+    }, [token, db])
+  );
 
 
   return (
@@ -46,7 +63,7 @@ export function NotesPage() {
         <TouchableOpacity style={styles.iconWrapperLeft} onPress={() => navigation.goBack()}>
           <Back width={32} height={32} fill='' />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconPlus} onPress={() => navigation.navigate('NotePage', { note: null, sectionId: chapterId, updateNotes: updateNotes })}>
+        <TouchableOpacity style={styles.iconPlus} onPress={() => navigation.navigate('NotePage', { note: null, sectionId: chapterId })}>
           <Plus />
         </TouchableOpacity>
       </View>
@@ -55,7 +72,6 @@ export function NotesPage() {
           <Note
             key={obj.id}
             note={obj}
-            updateNotes={updateNotes}
           />
         ))}
       </ScrollView>

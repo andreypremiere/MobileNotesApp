@@ -8,21 +8,33 @@ import Delete from '../assets/icons/delete.svg'
 import { useDatabase } from '../context/databaseContext';
 import SectionRepository from '../utils/sectionRepo';
 import { deleteSection, getSections } from '../utils/requests';
+import { logAction } from '../utils/loggingUtils';
 
 
-export function Chapter({ chapter, setChapters, chapters, handleUpdateChapter }) {
+export function Chapter({ chapter, setChapters, chapters,
+  // handleUpdateChapter
+}) {
   const { token } = useContext(AuthContext);
   const navigation = useNavigation();
   const db = useDatabase();
 
   const handleDeleteSection = async () => {
     if (token) {
-      const result = await deleteSection(chapter.id, token)
-      if (result) {
-        const updatedChapters = chapters.filter((ch) => ch.id !== chapter.id);
-        setChapters(updatedChapters);
-      }
+      await deleteSection(chapter.id, token)
     }
+    else {
+      await logAction({
+        operation: 'deleteSection', 
+        sectionId: chapter.id
+      })
+    }
+    if (db) {
+      await SectionRepository.delete(db, chapter.id)
+    }
+
+    const updatedChapters = chapters.filter((ch) => ch.id !== chapter.id);
+    setChapters(updatedChapters);
+
     // else {
     //   SectionRepository.delete(db, chapter.id)
     //     .then(() => SectionRepository.getAll(db))
@@ -43,7 +55,7 @@ export function Chapter({ chapter, setChapters, chapters, handleUpdateChapter })
           onPress={() =>
             navigation.navigate('ChapterPage', {
               chapter: chapter,
-              handleAddChapter: handleUpdateChapter
+              // handleAddChapter: handleUpdateChapter
             })
           }
         >

@@ -1,4 +1,4 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { CommonActions, StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
@@ -6,7 +6,7 @@ import MapView, { Marker } from 'react-native-maps';
 export function MapPage() {
     const navigation = useNavigation();
     const route = useRoute();
-    const { note, updateMap } = route.params;
+    const { note } = route.params;
     const defaultMap = {
         location: null,
         address: '',
@@ -96,8 +96,22 @@ export function MapPage() {
     };
 
     const handleSave = () => {
-        updateMap(localNote);
-        navigation.goBack()
+        navigation.dispatch(state => {
+            // Получаем текущие маршруты
+            const routes = state.routes.slice(0, -2); // убираем 2 последних
+
+            // Добавляем нужный новый экран в стек
+            routes.push({
+                name: 'NotePage',
+                params: { note: localNote, sectionId: localNote.section_id }
+            });
+
+            return CommonActions.reset({
+                ...state,
+                routes,
+                index: routes.length - 1, // ставим индекс на новый последний экран
+            });
+        });
     };
 
     const handleCancel = () => {
@@ -160,32 +174,32 @@ export function MapPage() {
 
 const styles = StyleSheet.create({
     buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  buttonMap: {
-    backgroundColor: '#f9f9f9',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignSelf: 'flex-start',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-//   button: {
-//     backgroundColor: '#007BFF',
-//     paddingVertical: 10,
-//     paddingHorizontal: 14,
-//     borderRadius: 6,
-//     flex: 1,
-//     marginHorizontal: 4,
-//   },
-  buttonText: {
-    // color: '',
-    textAlign: 'center',
-    fontWeight: '600',
-  },
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 12,
+    },
+    buttonMap: {
+        backgroundColor: '#f9f9f9',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        alignSelf: 'flex-start',
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 8,
+    },
+    //   button: {
+    //     backgroundColor: '#007BFF',
+    //     paddingVertical: 10,
+    //     paddingHorizontal: 14,
+    //     borderRadius: 6,
+    //     flex: 1,
+    //     marginHorizontal: 4,
+    //   },
+    buttonText: {
+        // color: '',
+        textAlign: 'center',
+        fontWeight: '600',
+    },
     screen: {
         flex: 1,
         backgroundColor: '#fff',

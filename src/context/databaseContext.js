@@ -17,16 +17,42 @@ export const DatabaseProvider = ({ children }) => {
           location: 'default',
         });
 
+        // Транзакция для включения внешних ключей
         await database.transaction(async tx => {
-          await tx.executeSql(`
+          await tx.executeSql(
+            'PRAGMA foreign_keys = ON;',
+            [],
+            () => console.log('Внешние ключи включены'),
+            (_, error) => {
+              console.error('Ошибка включения внешних ключей:', error);
+              throw error;
+            }
+          );
+        });
+
+        // Транзакция для создания таблицы sections
+        await database.transaction(async tx => {
+          await tx.executeSql(
+            `
             CREATE TABLE IF NOT EXISTS sections (
               id TEXT PRIMARY KEY,
               title TEXT NOT NULL,
               subtitle TEXT
             );
-          `);
+            `,
+            [],
+            () => console.log('Таблица sections создана'),
+            (_, error) => {
+              console.error('Ошибка создания таблицы sections:', error);
+              throw error;
+            }
+          );
+        });
 
-          await tx.executeSql(`
+        // Транзакция для создания таблицы notes
+        await database.transaction(async tx => {
+          await tx.executeSql(
+            `
             CREATE TABLE IF NOT EXISTS notes (
               id TEXT PRIMARY KEY,
               section_id TEXT NOT NULL,
@@ -36,7 +62,29 @@ export const DatabaseProvider = ({ children }) => {
               map TEXT,
               FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
             );
-          `);
+            `,
+            [],
+            () => console.log('Таблица notes создана'),
+            (_, error) => {
+              console.error('Ошибка создания таблицы notes:', error);
+              throw error;
+            }
+          );
+        });
+
+        // Проверка существующих таблиц
+        await database.transaction(async tx => {
+          await tx.executeSql(
+            `SELECT name FROM sqlite_master WHERE type='table';`,
+            [],
+            (_, { rows }) => {
+              console.log('Таблицы в базе данных:', rows.raw());
+            },
+            (_, error) => {
+              console.error('Ошибка проверки таблиц:', error);
+              throw error;
+            }
+          );
         });
 
         console.log('База данных инициализирована');

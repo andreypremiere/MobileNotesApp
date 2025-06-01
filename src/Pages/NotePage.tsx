@@ -8,13 +8,17 @@ import { Note } from '../components/Note';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { createNote, deleteNote, updateNote } from '../utils/requests';
+import NoteRepository from '../utils/noteRepo';
+import { useDatabase } from '../context/databaseContext';
+import { logAction } from '../utils/loggingUtils';
 
 
 export function NotePage() {
   const { token } = useContext(AuthContext)
   const navigation = useNavigation();
   const route = useRoute();
-  const { note, sectionId, updateNotes } = route.params;
+  const db = useDatabase();
+  const { note, sectionId } = route.params;
 
   const [localNote, setLocalNote] = useState(note || {
     section_id: sectionId,
@@ -25,40 +29,101 @@ export function NotePage() {
   });
 
   const handleDelete = async () => {
-    await deleteNote(sectionId, note.id, token)
-    updateNotes()
+    if (token) {
+      await deleteNote(sectionId, note.id, token)
+    }
+    else {
+      await logAction({
+        operation: 'deleteNote',
+        sectionId: sectionId,
+        noteId: note.id
+      })
+      // В файл
+    }
+    if (db) {
+      try {
+        await NoteRepository.delete(db, note.id, note.section_id)
+        console.log('Заметка удалена')
+      }
+      catch (error) {
+        console.log('Ошибка при получении в sqlite', error)
+      }
+    }
     navigation.goBack()
   };
 
-  const updateMap = (newNote) => {
-    setLocalNote(newNote)
-  }
+  // const updateMap = (newNote) => {
+  //   setLocalNote(newNote)
+  // }
 
   const handleUpdate = async () => {
-    await updateNote(localNote.section_id, note.id, {
+    const noteData = {
       title: localNote.title,
       subtitle: localNote.subtitle,
       content: localNote.content,
       map: localNote.map
-    }, token)
-    updateNotes()
+    }
+
+    if (token) {
+      await updateNote(localNote.section_id, note.id, noteData, token)
+    }
+    else {
+      await logAction({
+        operation: 'updateNote',
+        sectionId: localNote.section_id,
+        payload: noteData
+      })
+      // В файл
+    }
+    if (db) {
+      try {
+        await NoteRepository.update(db, note.id, noteData, note.section_id)
+        console.log('Заметка обновлена')
+      }
+      catch (error) {
+        console.log('Ошибка при получении в sqlite', error)
+      }
+    }
+
     navigation.goBack()
   }
 
   const handleSave = async () => {
-    await createNote(localNote.section_id, {
+    console.log('Операция сохранения')
+    const noteData = {
       title: localNote.title,
       subtitle: localNote.subtitle,
       content: localNote.content,
       map: localNote.map
-    }, token)
-    updateNotes()
+    }
+    if (token) {
+      await createNote(localNote.section_id, noteData, token)
+    }
+    else {
+      await logAction({
+        operation: 'createNote',
+        sectionId: localNote.section_id,
+        payload: noteData
+      })
+    }
+    if (db) {
+      console.log('section_id перед добавлением: ', localNote.section_id)
+      try {
+        await NoteRepository.create(db, noteData, localNote.section_id)
+        console.log('Заметка создана')
+      }
+      catch (error) {
+        console.log('Ошибка при получении в sqlite', error)
+      }
+    }
     navigation.goBack()
   }
 
   useEffect(() => {
     console.log(note)
   }, [])
+
+
 
   return (
     <View style={styles.screen}>
@@ -106,8 +171,8 @@ export function NotePage() {
 
           <Text style={styles.label}>{localNote.map.address !== undefined ? localNote.map.address : 'Метка на карте не выбрана'}</Text>
 
-          <TouchableOpacity style={styles.buttonMap} 
-          onPress={() => navigation.navigate('MapPage', { note: localNote, updateMap: updateMap })}>
+          <TouchableOpacity style={styles.buttonMap}
+            onPress={() => navigation.navigate('MapPage', { note: localNote})}>
             <Text>Открыть карту</Text>
           </TouchableOpacity>
         </View>
@@ -118,7 +183,7 @@ export function NotePage() {
             <Text style={styles.buttonText}>Удалить</Text>
           </TouchableOpacity>}
 
-          <TouchableOpacity style={styles.buttonMap} onPress={note ? handleUpdate : handleSave}>
+          <TouchableOpacity style={styles.buttonMap} onPress={note?.id !== undefined ? handleUpdate : handleSave}>
             <Text style={styles.buttonText}>Сохранить</Text>
           </TouchableOpacity>
         </View>

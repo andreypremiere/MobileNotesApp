@@ -1,10 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import Logo from '../assets/icons/account.svg';
 import { Note } from '../components/Note';
 import Back from '../assets/icons/button-back.svg';
 import { Chapter } from '../components/Chapter';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Plus from '../assets/icons/Plus.svg';
 import Logout from '../assets/icons/exit.svg'
 import { useDatabase } from '../context/databaseContext';
@@ -12,6 +12,7 @@ import SectionRepository from '../utils/sectionRepo';
 import { AuthContext } from '../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSections } from '../utils/requests';
+import { syncActions } from '../utils/syncUtils';
 
 export function ChaptersPage() {
   const [chapters, setChapters] = useState([])
@@ -43,47 +44,45 @@ export function ChaptersPage() {
     }
   }, [nickname]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (nickname) {
-        try {
-          const sections = await getSections(token);
-          setChapters(sections)
-          console.log('Полученные разделы:', sections);
-        } catch (error) {
-          console.error('Ошибка при получении разделов:', error);
-        }
-      } else {
+  const fetchData = async () => {
+    await syncActions(token)
+    if (token) {
+      try {
+        const sections = await getSections(token);
+        setChapters(sections)
+        console.log('Полученные разделы по api:', sections);
+      } catch (error) {
+        console.error('Ошибка при получении разделов:', error);
+      }
+    } else {
+      if (db) {
         try {
           const data = await SectionRepository.getAll(db);
-          setChapters(data);
+          if (!token) {
+            setChapters(data);
+          }
           console.log('Записи получены через SQLite:', data);
         } catch (error) {
           console.error('Ошибка при получении данных:', error);
         }
       }
-    };
 
-    fetchData();
-  }, [nickname]);
-
-  const addSection = async () => {
-    if (token) {
-      const sections = await getSections(token);
-      setChapters(sections)
     }
-    // else {
-    //   SectionRepository.create(db, { title: 'Новый раздел', subtitle: 'Описание' })
-    //     .then(() => SectionRepository.getAll(db))
-    //     .then(setChapters)
-    //     .catch(console.error);
-    // }
-    // console.log(chapters);
   };
+
+  // useEffect(() => {
+  //   fetchData();
+  // }, [nickname, db]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [token, db])
+  );
 
   const handleCreateSection = () => {
     navigation.navigate('ChapterPage', {
-      handleAddChapter: addSection,
+      // handleAddChapter: addSection,
       chapter: null,
     });
   };
@@ -115,7 +114,7 @@ export function ChaptersPage() {
             chapter={obj}
             setChapters={setChapters}
             chapters={chapters}
-            handleUpdateChapter={addSection}
+          // handleUpdateChapter={addSection}
           />
         ))}
       </ScrollView>

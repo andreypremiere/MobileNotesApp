@@ -7,13 +7,54 @@ import { Chapter } from '../components/Chapter';
 import { Note } from '../components/Note';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { createNote, deleteNote, updateNote } from '../utils/requests';
 
 
 export function NotePage() {
+  const { token } = useContext(AuthContext)
   const navigation = useNavigation();
   const route = useRoute();
-  const { note } = route.params;
+  const { note, sectionId, updateNotes } = route.params;
 
+  const [localNote, setLocalNote] = useState(note || {
+    section_id: sectionId,
+    title: '',
+    subtitle: '',
+    content: '',
+    map: {}
+  });
+
+  const handleDelete = async () => {
+    await deleteNote(sectionId, note.id, token)
+    updateNotes()
+    navigation.goBack()
+  };
+
+  const updateMap = (newNote) => {
+    setLocalNote(newNote)
+  }
+
+  const handleUpdate = async () => {
+    await updateNote(localNote.section_id, note.id, {
+      title: localNote.title,
+      subtitle: localNote.subtitle,
+      content: localNote.content,
+      map: localNote.map
+    }, token)
+    updateNotes()
+    navigation.goBack()
+  }
+
+  const handleSave = async () => {
+    await createNote(localNote.section_id, {
+      title: localNote.title,
+      subtitle: localNote.subtitle,
+      content: localNote.content,
+      map: localNote.map
+    }, token)
+    updateNotes()
+    navigation.goBack()
+  }
 
   useEffect(() => {
     console.log(note)
@@ -23,14 +64,9 @@ export function NotePage() {
     <View style={styles.screen}>
       <View style={styles.navbar}>
         <View style={styles.statusBar}>
-          {/* <Text style={styles.title}>Войдите для синхронизации</Text>
-          <Text style={styles.status}>offline</Text> */}
-          <Text style={styles.title_2}>Создание заметки</Text>
+          <Text style={styles.title_2}>{note ? 'Редактирование заметки' : 'Создание заметки'}</Text>
         </View>
-        {/* <TouchableOpacity style={styles.iconWrapper}>
-          <Logo width={32} height={32} fill='' />
-        </TouchableOpacity> */}
-        <TouchableOpacity style={styles.iconWrapperLeft}>
+        <TouchableOpacity style={styles.iconWrapperLeft} onPress={() => navigation.goBack()}>
           <Back width={32} height={32} fill='' />
         </TouchableOpacity>
       </View>
@@ -42,17 +78,19 @@ export function NotePage() {
             placeholder="Заголовок"
             placeholderTextColor="#888888"
 
-            value={note.title}
-            onChangeText={() => { }}
+            value={localNote.title}
+            onChangeText={(text) => setLocalNote({ ...localNote, title: text })}
           />
 
           <TextInput
             style={styles.input}
             placeholder="Подзаголовок (до 150 символов)"
             placeholderTextColor="#888888"
-            value={note.subtitle}
+            value={localNote.subtitle}
             onChangeText={(text) => {
-              if (text.length <= 150) () => { };
+              if (text.length <= 150) {
+                setLocalNote({ ...localNote, subtitle: text });
+              }
             }}
           />
 
@@ -60,26 +98,27 @@ export function NotePage() {
             style={styles.textArea}
             placeholder="Текст заметки"
             placeholderTextColor="#888888"
-            value={note.content}
-            onChangeText={() => { }}
+            value={localNote.content}
+            onChangeText={(text) => setLocalNote({ ...localNote, content: text })}
             multiline
             textAlignVertical="top"
           />
 
-          <Text style={styles.label}>{note.map?.address ? note.map.address : 'Метка на карте не выбрана'}</Text>
+          <Text style={styles.label}>{localNote.map.address !== undefined ? localNote.map.address : 'Метка на карте не выбрана'}</Text>
 
-          <TouchableOpacity style={styles.buttonMap} onPress={() => navigation.navigate('MapPage', { note: note })}>
+          <TouchableOpacity style={styles.buttonMap} 
+          onPress={() => navigation.navigate('MapPage', { note: localNote, updateMap: updateMap })}>
             <Text>Открыть карту</Text>
           </TouchableOpacity>
         </View>
 
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.buttonMap} onPress={() => console.log('Удалить')}>
+          {note && <TouchableOpacity style={styles.buttonMap} onPress={() => handleDelete()}>
             <Text style={styles.buttonText}>Удалить</Text>
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
-          <TouchableOpacity style={styles.buttonMap} onPress={() => console.log('Сохранить')}>
+          <TouchableOpacity style={styles.buttonMap} onPress={note ? handleUpdate : handleSave}>
             <Text style={styles.buttonText}>Сохранить</Text>
           </TouchableOpacity>
         </View>

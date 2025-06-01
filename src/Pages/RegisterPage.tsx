@@ -2,18 +2,27 @@ import React, { useContext, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import Logo from '../assets/icons/Home.svg';
+import { useNavigation } from '@react-navigation/native';
+import { registerUser } from '../utils/requests';
 
 
-export function RegisterPage({ navigation }) {
-  const { setToken } = useContext(AuthContext);
+export function RegisterPage() {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [repeatedPassword, setRepeatedPassword] = useState('');
+  const navigation = useNavigation();
+
+  const handleRegistrate = async () => {
+    if (password !== repeatedPassword) return 
+
+    await registerUser(userName, password)
+    navigation.navigate('LoginPage')
+  }
 
   return (
     <View style={styles.screen}>
       <View style={styles.frame}>
-      <TouchableOpacity style={styles.iconWrapper}>
+      <TouchableOpacity style={styles.iconWrapper} onPress={() => {navigation.navigate("ChaptersPage")}}>
         <Logo width={32} height={32} fill=''/>
       </TouchableOpacity>
       <Text style={styles.title}>Регистрация</Text>
@@ -40,13 +49,13 @@ export function RegisterPage({ navigation }) {
         placeholderTextColor="#888888"
         secureTextEntry
       />
-      <TouchableOpacity style={styles.buttonEnter} onPress={() => setToken('example-token')}>
+      <TouchableOpacity style={styles.buttonEnter} onPress={() => handleRegistrate()}>
         <Text style={styles.buttonText}>Зарегистрироваться</Text>
       </TouchableOpacity> 
       <View style={styles.container}>
       <Text style={styles.text}>
         У вас уже есть аккаунт?{' '}
-        <Text style={styles.link} onPress={() => navigation.navigate('Home')}>
+        <Text style={styles.link} onPress={() => {navigation.navigate("LoginPage")}}>
           Войти
         </Text>
       </Text>

@@ -5,22 +5,51 @@ import Logo from '../assets/icons/account.svg';
 import { useNavigation } from '@react-navigation/native';
 import Edit from '../assets/icons/edit.svg';
 import Delete from '../assets/icons/delete.svg'
+import { useDatabase } from '../context/databaseContext';
+import SectionRepository from '../utils/sectionRepo';
+import { deleteSection, getSections } from '../utils/requests';
 
 
-export function Chapter({ chapter }) {
+export function Chapter({ chapter, setChapters, chapters, handleUpdateChapter }) {
+  const { token } = useContext(AuthContext);
   const navigation = useNavigation();
+  const db = useDatabase();
+
+  const handleDeleteSection = async () => {
+    if (token) {
+      const result = await deleteSection(chapter.id, token)
+      if (result) {
+        const updatedChapters = chapters.filter((ch) => ch.id !== chapter.id);
+        setChapters(updatedChapters);
+      }
+    }
+    // else {
+    //   SectionRepository.delete(db, chapter.id)
+    //     .then(() => SectionRepository.getAll(db))
+    //     .then(setChapters)
+    //     .catch(console.error);
+    // }
+  };
 
   return (
     <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotesPage', { chapterId: chapter.id })}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{chapter.title}</Text>
-        <Text style={styles.subTitle}>{chapter.subTitle}</Text>
+        <Text style={styles.sub_title}>{chapter.subtitle}</Text>
       </View>
       <View style={styles.elementsContainer}>
-        <TouchableOpacity style={styles.iconWrapper}>
+        <TouchableOpacity
+          style={styles.iconWrapper}
+          onPress={() =>
+            navigation.navigate('ChapterPage', {
+              chapter: chapter,
+              handleAddChapter: handleUpdateChapter
+            })
+          }
+        >
           <Edit />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconWrapper}>
+        <TouchableOpacity style={styles.iconWrapper} onPress={() => { handleDeleteSection() }}>
           <Delete />
         </TouchableOpacity>
       </View>
@@ -30,44 +59,44 @@ export function Chapter({ chapter }) {
 
 const styles = StyleSheet.create({
   item: {
-    flexDirection: 'row', // Располагаем содержимое в строку
-    justifyContent: 'space-between', // Текст слева, иконки справа
-    alignItems: 'center', // Выравнивание по вертикали
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 10,
     borderWidth: 1,
     borderColor: 'black',
     borderRadius: 8,
     width: '96%',
-    marginVertical: 4, // Добавлен небольшой отступ между элементами
+    marginVertical: 4,
   },
   textContainer: {
-    flex: 1, // Текстовый блок занимает доступное пространство
+    flex: 1,
     gap: 4,
   },
   title: {
-    textAlign: 'flex-start',       // текст по центру
+    textAlign: 'left',
     fontSize: 16,
     fontWeight: '600',
   },
   sub_title: {
-    textAlign: 'flex-start',       // текст по центру
+    textAlign: 'left',
     fontSize: 12,
     fontWeight: '400',
   },
   elementsContainer: {
-    flexDirection: 'row', // Иконки в строку
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: 10, // Расстояние между иконками
+    gap: 10,
   },
   iconWrapper: {
-    backgroundColor: '#fff', // Фон для лучшей видимости тени
-    borderRadius: 8, // Скругление углов для иконок
-    padding: 6, // Внутренний отступ для увеличения области нажатия
-    shadowColor: '#000', // Цвет тени
-    shadowOffset: { width: 0, height: 2 }, // Смещение тени
-    shadowOpacity: 0.3, // Прозрачность тени
-    shadowRadius: 3, // Радиус размытия тени
-    elevation: 2, // Тень для Android
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 2,
   },
 
 });

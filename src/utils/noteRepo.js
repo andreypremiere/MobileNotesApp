@@ -1,8 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
-import db from './database';
 
 class NoteRepository {
-  static async create(note, sectionId) {
+  static async create(db, note, sectionId) {
     /**
      * Создает новую заметку в разделе.
      * @param {Object} note - Объект с полями title, subtitle, content, map.
@@ -30,7 +29,7 @@ class NoteRepository {
     });
   }
 
-  static async update(noteId, note, sectionId) {
+  static async update(db, noteId, note, sectionId) {
     /**
      * Обновляет заметку.
      * @param {string} noteId - UUID заметки.
@@ -64,7 +63,7 @@ class NoteRepository {
     });
   }
 
-  static async getAll(sectionId) {
+  static async getAll(db, sectionId) {
     /**
      * Получает все заметки в разделе.
      * @param {string} sectionId - UUID раздела.
@@ -88,7 +87,7 @@ class NoteRepository {
     });
   }
 
-  static async get(noteId, sectionId) {
+  static async get(db, noteId, sectionId) {
     /**
      * Получает заметку по ID.
      * @param {string} noteId - UUID заметки.
@@ -117,7 +116,7 @@ class NoteRepository {
     });
   }
 
-  static async delete(noteId, sectionId) {
+  static async delete(db, noteId, sectionId) {
     /**
      * Удаляет заметку.
      * @param {string} noteId - UUID заметки.
@@ -136,7 +135,7 @@ class NoteRepository {
     });
   }
 
-  static async getAllByUserId() {
+  static async getAllByUserId(db) {
     /**
      * Получает все заметки пользователя (в оффлайн-режиме все заметки в базе).
      * @returns {Promise<Array>} - Список всех заметок.

@@ -7,73 +7,100 @@ import { Chapter } from '../components/Chapter';
 import { Note } from '../components/Note';
 import MapView, { Marker } from 'react-native-maps';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { createSection, updateSection } from '../utils/requests';
 
 
 export function ChapterPage() {
+    const {token} = useContext(AuthContext)
     const navigation = useNavigation();
     const route = useRoute();
-    //   const { note } = route.params;
-    const [note, setNote] = useState({})
+    const { chapter, handleAddChapter } = route.params || {};
 
+    const isCreating = !chapter;
 
-    useEffect(() => {
-        // console.log(note)
-    }, [])
+    const [localChapter, setLocalChapter] = useState({
+        title: chapter?.title || '',
+        subtitle: chapter?.subtitle || '',
+    });
+
+    const handleSave = async () => {
+        if (handleAddChapter) {
+            const newChapter = await createSection({title: localChapter.title, subtitle: localChapter.subtitle},
+                 token)
+            console.log('Созданный раздел', newChapter)
+            handleAddChapter();
+        }
+        navigation.goBack();
+    };
+
+    const handleUpdate = async () => {
+        // Здесь можно вызвать метод обновления в SQLite
+        // console.log('Обновление раздела', localChapter);
+        await updateSection(chapter.id, {title: localChapter.title,
+            subtitle: localChapter.subtitle
+        }, token)
+        handleAddChapter();
+        
+        navigation.goBack();
+    };
 
     return (
-        <View style={styles.screen}>
-            <View style={styles.navbar}>
-                <View style={styles.statusBar}>
-                    {/* <Text style={styles.title}>Войдите для синхронизации</Text>
-                    <Text style={styles.status}>offline</Text> */}
-                    <Text style={styles.title_2}>Создание раздела</Text>
-                </View>
-                {/* <TouchableOpacity style={styles.iconWrapper}>
-                    <Logo width={32} height={32} fill='' />
-                </TouchableOpacity> */}
-                <TouchableOpacity style={styles.iconWrapperLeft}>
-                    <Back width={32} height={32} fill=''
-                        onPress={() => navigation.goBack()} />
-                </TouchableOpacity>
-            </View>
-            <View style={styles.frame}>
-
-                <View style={styles.component}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Заголовок"
-                        placeholderTextColor="#888888"
-
-                        value={note.title}
-                        onChangeText={() => { }}
-                    />
-
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Подзаголовок (до 150 символов)"
-                        placeholderTextColor="#888888"
-                        value={note.subtitle}
-                        onChangeText={(text) => {
-                            if (text.length <= 150) () => { };
-                        }}
-                    />
-                </View>
-
-
-                <View style={styles.buttonRow}>
-                    <TouchableOpacity style={styles.buttonMap} onPress={() => console.log('Удалить')}>
-                        <Text style={styles.buttonText}>Удалить</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.buttonMap} onPress={() => console.log('Сохранить')}>
-                        <Text style={styles.buttonText}>Сохранить</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-
+    <View style={styles.screen}>
+      <View style={styles.navbar}>
+        <View style={styles.statusBar}>
+          <Text style={styles.title_2}>
+            {isCreating ? 'Создание раздела' : 'Редактирование раздела'}
+          </Text>
         </View>
-    );
+        <TouchableOpacity style={styles.iconWrapperLeft}>
+          <Back width={32} height={32} fill="" onPress={() => navigation.goBack()} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.frame}>
+        <View style={styles.component}>
+          <TextInput
+            style={styles.input}
+            placeholder="Заголовок"
+            placeholderTextColor="#888888"
+            value={localChapter.title}
+            onChangeText={(text) =>
+              setLocalChapter((prev) => ({ ...prev, title: text }))
+            }
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Подзаголовок (до 150 символов)"
+            placeholderTextColor="#888888"
+            value={localChapter.subtitle}
+            onChangeText={(text) => {
+              if (text.length <= 150) {
+                setLocalChapter((prev) => ({ ...prev, subtitle: text }));
+              }
+            }}
+          />
+        </View>
+
+        <View style={styles.buttonRow}>
+          {/* {!isCreating && (
+            <TouchableOpacity style={styles.buttonMap} onPress={() => console.log('Удалить')}>
+              <Text style={styles.buttonText}>Удалить</Text>
+            </TouchableOpacity>
+          )} */}
+
+          <TouchableOpacity
+            style={styles.buttonMap}
+            onPress={isCreating ? handleSave : handleUpdate}
+          >
+            <Text style={styles.buttonText}>Сохранить</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
 }
+
 
 const styles = StyleSheet.create({
     buttonMap: {
@@ -186,7 +213,7 @@ const styles = StyleSheet.create({
     },
     buttonRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         marginTop: 12,
     },
     button: {

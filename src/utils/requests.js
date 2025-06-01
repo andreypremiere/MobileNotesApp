@@ -1,8 +1,7 @@
-const URL_PATH = 'http://localhost:8000';
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0ZGZiNTc1YS05YWQ0LTRlYjUtYjYzNC1jMjg2MTI3Mjg0ZGEiLCJleHAiOjE3NDg4Njk2NDF9.DaFQCq6tTwyNeIvh2G492IEkgXf9wQqK4H_REKAocsk
+const URL_PATH = 'https://web-production-d616.up.railway.app';
 
 
-export default async function registerUser(nickname, password) {
+export async function registerUser(nickname, password) {
     try {
         const response = await fetch(`${URL_PATH}/register`, {
             method: 'POST',
@@ -16,7 +15,7 @@ export default async function registerUser(nickname, password) {
     }
 }
 
-export default async function loginUser(nickname, password) {
+export async function loginUser(nickname, password) {
     try {
         const response = await fetch(`${URL_PATH}/login`, {
             method: 'POST',
@@ -24,13 +23,14 @@ export default async function loginUser(nickname, password) {
             body: JSON.stringify({ nickname, password })
         });
         const data = await response.json();
-        return data.access_token;
+        console.log('data', data)
+        return data;
     } catch (error) {
         console.error('Ошибка:', error);
     }
 }
 
-export default async function getSections(accessToken) {
+export async function getSections(accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections`, {
             method: 'GET',
@@ -46,7 +46,7 @@ export default async function getSections(accessToken) {
     }
 }
 
-export default async function getSection(sectionId, accessToken) {
+export async function getSection(sectionId, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}`, {
             method: 'GET',
@@ -62,7 +62,7 @@ export default async function getSection(sectionId, accessToken) {
     }
 }
 
-export default async function createSection(sectionData, accessToken) {
+export async function createSection(sectionData, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections`, {
             method: 'POST',
@@ -79,7 +79,7 @@ export default async function createSection(sectionData, accessToken) {
     }
 }
 
-export default async function updateSection(sectionId, sectionData, accessToken) {
+export async function updateSection(sectionId, sectionData, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}`, {
             method: 'PUT',
@@ -96,7 +96,7 @@ export default async function updateSection(sectionId, sectionData, accessToken)
     }
 }
 
-export default async function deleteSection(sectionId, accessToken) {
+export async function deleteSection(sectionId, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}`, {
             method: 'DELETE',
@@ -110,7 +110,7 @@ export default async function deleteSection(sectionId, accessToken) {
     }
 }
 
-export default async function createNote(sectionId, noteData, accessToken) {
+export async function createNote(sectionId, noteData, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}/notes`, {
             method: 'POST',
@@ -127,7 +127,7 @@ export default async function createNote(sectionId, noteData, accessToken) {
     }
 }
 
-export default async function getNotes(sectionId, accessToken) {
+export async function getNotes(sectionId, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}/notes`, {
             method: 'GET',
@@ -143,7 +143,7 @@ export default async function getNotes(sectionId, accessToken) {
     }
 }
 
-export default async function getNote(sectionId, noteId, accessToken) {
+export async function getNote(sectionId, noteId, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}/notes/${noteId}`, {
             method: 'GET',
@@ -159,7 +159,7 @@ export default async function getNote(sectionId, noteId, accessToken) {
     }
 }
 
-export default async function updateNote(sectionId, noteId, noteData, accessToken) {
+export async function updateNote(sectionId, noteId, noteData, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}/notes/${noteId}`, {
             method: 'PUT',
@@ -176,7 +176,7 @@ export default async function updateNote(sectionId, noteId, noteData, accessToke
     }
 }
 
-export default async function deleteNote(sectionId, noteId, accessToken) {
+export async function deleteNote(sectionId, noteId, accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}/notes/${noteId}`, {
             method: 'DELETE',
@@ -190,7 +190,7 @@ export default async function deleteNote(sectionId, noteId, accessToken) {
     }
 }
 
-export default async function getAllUserNotes(accessToken) {
+export async function getAllUserNotes(accessToken) {
     try {
         const response = await fetch(`${URL_PATH}/notes`, {
             method: 'GET',

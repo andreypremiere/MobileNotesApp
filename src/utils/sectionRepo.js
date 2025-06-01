@@ -1,15 +1,14 @@
-import { v4 as uuidv4 } from 'uuid';
-import db from './database';
+import uuid from 'react-native-uuid';
 
 class SectionRepository {
-  static async create(section) {
+  static async create(db, section) {
     /**
      * Создает новый раздел.
      * @param {Object} section - Объект с полями title и subtitle.
      * @returns {Promise<Object>} - Созданный раздел.
      */
     return new Promise((resolve, reject) => {
-      const id = uuidv4();
+      const id = uuid.v4();
       db.transaction(tx => {
         tx.executeSql(
           'INSERT INTO sections (id, title, subtitle) VALUES (?, ?, ?)',
@@ -21,7 +20,7 @@ class SectionRepository {
     });
   }
 
-  static async getAll() {
+  static async getAll(db) {
     /**
      * Получает все разделы.
      * @returns {Promise<Array>} - Список разделов.
@@ -38,7 +37,7 @@ class SectionRepository {
     });
   }
 
-  static async get(sectionId) {
+  static async get(db, sectionId) {
     /**
      * Получает раздел по ID.
      * @param {string} sectionId - UUID раздела.
@@ -56,7 +55,7 @@ class SectionRepository {
     });
   }
 
-  static async update(sectionId, section) {
+  static async update(db, sectionId, section) {
     /**
      * Обновляет раздел.
      * @param {string} sectionId - UUID раздела.
@@ -81,7 +80,7 @@ class SectionRepository {
     });
   }
 
-  static async delete(sectionId) {
+  static async delete(db, sectionId) {
     /**
      * Удаляет раздел.
      * @param {string} sectionId - UUID раздела.

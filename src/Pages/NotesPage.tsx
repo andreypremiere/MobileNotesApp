@@ -5,22 +5,32 @@ import { Note } from '../components/Note';
 import Back from '../assets/icons/button-back.svg';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Plus from '../assets/icons/Plus.svg';
+import { AuthContext } from '../context/AuthContext';
+import { getNotes, updateNote } from '../utils/requests';
 
 
 
 export function NotesPage() {
+  const { token } = useContext(AuthContext)
   const route = useRoute();
   const { chapterId } = route.params;
 
   // const [notes, setNotes] = useState([])
-  const [notes, setNotes] = useState([
-    { id: 1, title: 'Заметка 1', subtitle: 'Подзаголовок 1', content: 'Текст 1' },
-    { id: 2, title: 'Заметка 2', subtitle: 'Подзаголовок 2', content: 'Текст 2' },
-  ]);
+  const [notes, setNotes] = useState([]);
+  const navigation = useNavigation();
+
+  const updateNotes = async () => {
+    if (token) {
+      const result = await getNotes(chapterId, token)
+      setNotes(result)
+    }
+
+  }
 
   useEffect(() => {
-    // Запрос к бд на получение заметок по chapterId, будет список объектов со значениями {id, title, subtitle, text, map}
+    updateNotes();
   }, [])
+
 
   return (
     <View style={styles.screen}>
@@ -33,10 +43,10 @@ export function NotesPage() {
         {/* <TouchableOpacity style={styles.iconWrapper}>
           <Logo width={32} height={32} fill='' />
         </TouchableOpacity> */}
-        <TouchableOpacity style={styles.iconWrapperLeft}>
+        <TouchableOpacity style={styles.iconWrapperLeft} onPress={() => navigation.goBack()}>
           <Back width={32} height={32} fill='' />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconPlus} onPress={() => { }}>
+        <TouchableOpacity style={styles.iconPlus} onPress={() => navigation.navigate('NotePage', { note: null, sectionId: chapterId, updateNotes: updateNotes })}>
           <Plus />
         </TouchableOpacity>
       </View>
@@ -44,7 +54,8 @@ export function NotesPage() {
         {notes.map((obj) => (
           <Note
             key={obj.id}
-            value={obj}
+            note={obj}
+            updateNotes={updateNotes}
           />
         ))}
       </ScrollView>
@@ -63,10 +74,10 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   navbar: {
-    flexDirection: 'row',     
-    alignItems: 'center',     
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    height: 60,      
+    height: 60,
   },
   title: {
     fontSize: 12,
@@ -107,7 +118,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-   iconPlus: {
+  iconPlus: {
     position: 'absolute',
     right: 10,
     backgroundColor: '#fff', // Фон для лучшей видимости тени

@@ -4,15 +4,19 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
 
-export function Note({ value }) {
+export function Note({ note, updateNotes }) {
   const { setToken } = useContext(AuthContext);
   const navigation = useNavigation();
 
 
   return (
-    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotePage', { note: value })}>
-        <Text style={styles.title}>{value.title}</Text>
-        <Text style={styles.sub_title}>{value.subtitle}</Text>
+    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotePage', {
+        note: note,
+        sectionId: note.section_id,
+        updateNotes: updateNotes,
+      })}>
+        <Text style={styles.title}>{note.title}</Text>
+        <Text style={styles.sub_title}>{note.subtitle}</Text>
     </TouchableOpacity>
   );
 }

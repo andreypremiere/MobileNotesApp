@@ -1,9 +1,12 @@
+import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
-export function MapPage({ route, navigation }) {
-    const { note } = route.params;
+export function MapPage() {
+    const navigation = useNavigation();
+    const route = useRoute();
+    const { note, updateMap } = route.params;
     const defaultMap = {
         location: null,
         address: '',
@@ -93,11 +96,12 @@ export function MapPage({ route, navigation }) {
     };
 
     const handleSave = () => {
-        navigation.navigate('NotePage', { note: localNote });
+        updateMap(localNote);
+        navigation.goBack()
     };
 
     const handleCancel = () => {
-        navigation.navigate('NotePage', { note: note });
+        navigation.goBack()
     };
 
     useEffect(() => {

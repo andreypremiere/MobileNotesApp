@@ -12,11 +12,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MapPage } from './src/Pages/MapPage';
 import { ChaptersPage } from './src/Pages/ChaptersPage';
 import { ChapterPage } from './src/Pages/ChapterPage';
+import { DatabaseProvider } from './src/context/databaseContext'
 
-
-
-
-// emulator -avd Medium_Phone_API_36.0
 // npx react-native run-android
 
 const Stack = createNativeStackNavigator();
@@ -24,43 +21,44 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
-  const [currentScreen, setCurrentScreen] = useState('home');
+  const [nickname, setNickname] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    AsyncStorage.getItem('jwtToken').then(savedToken => {
-      if (savedToken) {
-        setToken(savedToken);
-      }
-    });
+    const loadData = async () => {
+      const savedToken = await AsyncStorage.getItem('jwtToken');
+      const savedNickname = await AsyncStorage.getItem('nickname');
+      if (savedToken) setToken(savedToken);
+      if (savedNickname) setNickname(savedNickname);
+      console.log('Token', savedToken)
+      setIsLoading(true); // <--- Загрузка завершена
+    };
+    loadData();
   }, []);
 
-  useEffect(() => {
-    // Сохраняем токен при изменении
-    if (token) {
-      AsyncStorage.setItem('jwtToken', token);
-    } else {
-      AsyncStorage.removeItem('jwtToken');
-    }
-  }, [token]);
+  if (isLoading) {
+    return (
+      <AuthContext.Provider value={{ token, setToken, nickname, setNickname }}>
+        <DatabaseProvider>
+          <StatusBar barStyle="light-content" />
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="ChaptersPage" screenOptions={{ headerShown: false }}>
+              <Stack.Screen name='ChaptersPage' component={ChaptersPage} />
+              <Stack.Screen name='ChapterPage' component={ChapterPage} />
+              <Stack.Screen name="NotesPage" component={NotesPage} />
+              <Stack.Screen name="NotePage" component={NotePage} />
+              <Stack.Screen name="MapPage" component={MapPage} />
+              <Stack.Screen name="LoginPage" component={LoginPage} />
+              <Stack.Screen name="RegisterPage" component={RegisterPage} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </DatabaseProvider>
 
-
-  return (
-    <AuthContext.Provider value={{ token, setToken }}>
-      <StatusBar barStyle="light-content" />
-      <NavigationContainer>
-        <Stack.Navigator initialRouteName="ChapterPage" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name='ChaptersPage' component={ChaptersPage} />
-          <Stack.Screen name='ChapterPage' component={ChapterPage} />
-          <Stack.Screen name="NotesPage" component={NotesPage} />
-          <Stack.Screen name="NotePage" component={NotePage} />
-          <Stack.Screen name="MapPage" component={MapPage} />
-          <Stack.Screen name="LoginPage" component={LoginPage} />
-          <Stack.Screen name="RegisterPage" component={RegisterPage} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </AuthContext.Provider>
-  );
+      </AuthContext.Provider>
+    );
+  }
 }
+
 
 const styles = StyleSheet.create({
   container: {

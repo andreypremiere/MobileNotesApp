@@ -1,21 +1,35 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import Logo from '../assets/icons/Home.svg';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {loginUser} from '../utils/requests'
 
-
-export function LoginPage({ navigation }) {
-  const { setToken } = useContext(AuthContext);
+export function LoginPage() {
+  const { setToken, setNickname } = useContext(AuthContext);
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
+  const [chapters, setChapters] = useState([])
+  const navigation = useNavigation();
 
+  const handleEnter = async () => {
+    const data = await loginUser(userName, password);
+    if (data !== undefined) {
+      console.log('Вход выполнен', data.access_token)
+      setToken(data.access_token)
+      console.log('Nickname', data.nickname)
+      setNickname(data.nickname)
+      navigation.navigate('ChaptersPage')
+    }
+  }
 
   return (
     <View style={styles.screen}>
       <View style={styles.frame}>
-      <View style={styles.iconWrapper}>
+      <TouchableOpacity style={styles.iconWrapper} onPress={() => {navigation.navigate('ChaptersPage')}}>
         <Logo width={32} height={32} fill=''/>
-      </View>
+      </TouchableOpacity>
       <Text style={styles.title}>Вход</Text>
       <TextInput
         style={styles.input}
@@ -32,13 +46,13 @@ export function LoginPage({ navigation }) {
         secureTextEntry
         placeholderTextColor="#888888"
       />
-      <TouchableOpacity style={styles.buttonEnter} onPress={() => setToken('example-token')}>
+      <TouchableOpacity style={styles.buttonEnter} onPress={() => handleEnter()}>
         <Text style={styles.buttonText}>Войти</Text>
       </TouchableOpacity> 
       <View style={styles.container}>
       <Text style={styles.text}>
         У вас нет аккаунта?{' '}
-        <Text style={styles.link} onPress={() => navigation.navigate('Home')}>
+        <Text style={styles.link} onPress={() => navigation.navigate('RegisterPage')}>
           Регистрация
         </Text>
       </Text>

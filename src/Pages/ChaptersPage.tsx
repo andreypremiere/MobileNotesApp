@@ -6,51 +6,116 @@ import Back from '../assets/icons/button-back.svg';
 import { Chapter } from '../components/Chapter';
 import { useNavigation } from '@react-navigation/native';
 import Plus from '../assets/icons/Plus.svg';
-
+import Logout from '../assets/icons/exit.svg'
+import { useDatabase } from '../context/databaseContext';
+import SectionRepository from '../utils/sectionRepo';
+import { AuthContext } from '../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSections } from '../utils/requests';
 
 export function ChaptersPage() {
   const [chapters, setChapters] = useState([])
   const navigation = useNavigation();
+  const db = useDatabase();
+  const { token, setToken } = useContext(AuthContext);
+  const [handleFunctionAccount, setHandleFunctionAccount] = useState(() => { })
+  const { nickname, setNickname } = useContext(AuthContext);
 
   useEffect(() => {
-    // Запрос к бд на получение заметок, будет список объектов со значениями {id, title, subtitle, text, map}
-  }, [])
+    if (token) {
+      AsyncStorage.setItem('jwtToken', token);
+    } else {
+      AsyncStorage.removeItem('jwtToken'); // Удаляет токен, если он отсутствует
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (nickname) {
+      AsyncStorage.setItem('nickname', nickname);
+      setHandleFunctionAccount(() => () => {
+        setToken(null);
+        setNickname(null);
+      })
+
+    } else {
+      AsyncStorage.removeItem('nickname'); // Удаляет токен, если он отсутствует
+      setHandleFunctionAccount(() => () => navigation.navigate('LoginPage'))
+    }
+  }, [nickname]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (nickname) {
+        try {
+          const sections = await getSections(token);
+          setChapters(sections)
+          console.log('Полученные разделы:', sections);
+        } catch (error) {
+          console.error('Ошибка при получении разделов:', error);
+        }
+      } else {
+        try {
+          const data = await SectionRepository.getAll(db);
+          setChapters(data);
+          console.log('Записи получены через SQLite:', data);
+        } catch (error) {
+          console.error('Ошибка при получении данных:', error);
+        }
+      }
+    };
+
+    fetchData();
+  }, [nickname]);
+
+  const addSection = async () => {
+    if (token) {
+      const sections = await getSections(token);
+      setChapters(sections)
+    }
+    // else {
+    //   SectionRepository.create(db, { title: 'Новый раздел', subtitle: 'Описание' })
+    //     .then(() => SectionRepository.getAll(db))
+    //     .then(setChapters)
+    //     .catch(console.error);
+    // }
+    // console.log(chapters);
+  };
+
+  const handleCreateSection = () => {
+    navigation.navigate('ChapterPage', {
+      handleAddChapter: addSection,
+      chapter: null,
+    });
+  };
 
   return (
     <View style={styles.screen}>
       <View style={styles.navbar}>
         <View style={styles.statusBar}>
-          <Text style={styles.title}>Войдите для синхронизации</Text>
-          <Text style={styles.status}>offline</Text>
+          <Text style={styles.title}>{nickname ? nickname : 'Войдите для синхронизации'}</Text>
+          {/* <Text style={styles.status}>offline</Text> */}
         </View>
-        <TouchableOpacity style={styles.iconWrapper} onPress={() => navigation.navigate('LoginPage')}>
-          <Logo width={32} height={32} fill='' />
+        <TouchableOpacity style={styles.iconWrapper} onPress={handleFunctionAccount}>
+          {!nickname ?
+            <Logo width={32} height={32} fill='' /> :
+            <Logout width={32} height={32} fill='' />
+          }
         </TouchableOpacity>
       </View>
       <View>
         <Text style={styles.title_2}>Разделы</Text>
-        <TouchableOpacity style={styles.iconPlus} onPress={() => { }}>
+        <TouchableOpacity style={styles.iconPlus} onPress={() => handleCreateSection()}>
           <Plus />
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.frame}>
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-        <Chapter chapter={{ id: '1111', title: 'Все записи', subTitle: 'Содержит все записи' }} />  {/* По умолчанию */}
-
         {chapters.map((obj) => (
           <Chapter
             key={obj.id}
             chapter={obj}
+            setChapters={setChapters}
+            chapters={chapters}
+            handleUpdateChapter={addSection}
           />
         ))}
       </ScrollView>

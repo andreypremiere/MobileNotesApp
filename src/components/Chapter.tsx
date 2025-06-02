@@ -35,12 +35,6 @@ export function Chapter({ chapter, setChapters, chapters,
     const updatedChapters = chapters.filter((ch) => ch.id !== chapter.id);
     setChapters(updatedChapters);
 
-    // else {
-    //   SectionRepository.delete(db, chapter.id)
-    //     .then(() => SectionRepository.getAll(db))
-    //     .then(setChapters)
-    //     .catch(console.error);
-    // }
   };
 
   return (

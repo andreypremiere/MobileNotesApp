@@ -1,7 +1,7 @@
 import uuid from 'react-native-uuid';
 
 class NoteRepository {
-  static async create(db, note, sectionId) {
+  static async create(db, note, sectionId, idSaved) {
     /**
      * Создает новую заметку в разделе.
      * @param {Object} note - Объект с полями title, subtitle, content, map.
@@ -9,14 +9,14 @@ class NoteRepository {
      * @returns {Promise<Object>} - Созданная заметка.
      */
     return new Promise((resolve, reject) => {
-      const id = uuid.v4();
+      const id = idSaved ? idSaved : uuid.v4();
       const serializedMap = note.map ? JSON.stringify(note.map) : null;
       db.transaction(tx => {
         tx.executeSql(
           'INSERT INTO notes (id, section_id, title, subtitle, content, map) VALUES (?, ?, ?, ?, ?, ?)',
           [id, sectionId, note.title, note.subtitle || null, note.content || null, serializedMap],
           (_, { rows }) => resolve({
-            id,
+            id: note.id,
             section_id: sectionId,
             title: note.title,
             subtitle: note.subtitle,

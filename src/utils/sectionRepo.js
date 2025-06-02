@@ -1,14 +1,14 @@
 import uuid from 'react-native-uuid';
 
 class SectionRepository {
-  static async create(db, section) {
+  static async create(db, section, savedId) {
     /**
      * Создает новый раздел.
      * @param {Object} section - Объект с полями title и subtitle.
      * @returns {Promise<Object>} - Созданный раздел.
      */
     return new Promise((resolve, reject) => {
-      const id = uuid.v4();
+      const id = savedId ? savedId : uuid.v4();
       db.transaction(tx => {
         tx.executeSql(
           'INSERT INTO sections (id, title, subtitle) VALUES (?, ?, ?)',

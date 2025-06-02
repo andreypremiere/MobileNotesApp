@@ -20,7 +20,7 @@ export function LoginPage() {
       setToken(data.access_token)
       console.log('Nickname', data.nickname)
       setNickname(data.nickname)
-      navigation.navigate('ChaptersPage')
+      navigation.goBack()
     }
   }
 

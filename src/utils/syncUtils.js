@@ -6,10 +6,9 @@ import { act } from 'react';
 
 
 export async function syncActions(token) {
-  await RNFS.writeFile(actionsFilePath, JSON.stringify([], null, 2));
-  const content = await RNFS.readFile(actionsFilePath);
-  const actions = JSON.parse(content);
-  console.log(actions)
+  // await RNFS.writeFile(actionsFilePath, JSON.stringify([], null, 2));
+  // const content = await RNFS.readFile(actionsFilePath);
+  // const actions = JSON.parse(content);
   if (!token) return;
 
   try {
@@ -32,7 +31,7 @@ export async function syncActions(token) {
       console.log(action)
       switch (action.operation) {
         case 'createNote':
-          await createNote(action.sectionId, action.payload, token);
+          await createNote(action.sectionId, action.payload, token, action.id);
           break;
         case 'updateNote':
           await updateNote(action.sectionId, action.noteId, action.payload, token);
@@ -41,7 +40,7 @@ export async function syncActions(token) {
           await deleteNote(action.sectionId, action.noteId, token);
           break;
         case 'createSection':
-          await createSection(action.payload, token);
+          await createSection(action.payload, token, action.id);
           break;
         case 'updateSection':
           await updateSection(action.sectionId, action.payload, token);

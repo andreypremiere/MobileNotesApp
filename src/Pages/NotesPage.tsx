@@ -26,20 +26,21 @@ export function NotesPage() {
       const result = await getNotes(chapterId, token)
       setNotes(result)
     }
-    if (db) {
-      try {
-        console.log('chapterId', chapterId)
-        const result = await NoteRepository.getAll(db, chapterId)
-        console.log('Получены заметки', result)
-        if (!token) {
-          setNotes(result)
+    else {
+      if (db) {
+        try {
+          console.log('chapterId', chapterId)
+          const result = await NoteRepository.getAll(db, chapterId)
+          console.log('Получены заметки', result)
+          if (!token) {
+            setNotes(result)
+          }
+        }
+        catch (error) {
+          console.log('Ошибка при получении в sqlite', error)
         }
       }
-      catch (error) {
-        console.log('Ошибка при получении в sqlite', error)
-      }
     }
-
   }
 
   useFocusEffect(

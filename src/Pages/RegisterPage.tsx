@@ -16,7 +16,7 @@ export function RegisterPage() {
     if (password !== repeatedPassword) return 
 
     await registerUser(userName, password)
-    navigation.navigate('LoginPage')
+    navigation.goBack()
   }
 
   return (

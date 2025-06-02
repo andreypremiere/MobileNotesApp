@@ -71,7 +71,8 @@ export function NotePage() {
       await logAction({
         operation: 'updateNote',
         sectionId: localNote.section_id,
-        payload: noteData
+        payload: noteData,
+        noteId: note.id
       })
       // В файл
     }
@@ -89,6 +90,7 @@ export function NotePage() {
   }
 
   const handleSave = async () => {
+    let newNoteAPI = null
     console.log('Операция сохранения')
     const noteData = {
       title: localNote.title,
@@ -97,19 +99,20 @@ export function NotePage() {
       map: localNote.map
     }
     if (token) {
-      await createNote(localNote.section_id, noteData, token)
-    }
-    else {
-      await logAction({
-        operation: 'createNote',
-        sectionId: localNote.section_id,
-        payload: noteData
-      })
+      newNoteAPI = await createNote(localNote.section_id, noteData, token, null)
     }
     if (db) {
       console.log('section_id перед добавлением: ', localNote.section_id)
       try {
-        await NoteRepository.create(db, noteData, localNote.section_id)
+        const newNote = await NoteRepository.create(db, noteData, localNote.section_id, newNoteAPI ? newNoteAPI.id : null)
+        if (!token) {
+          await logAction({
+            operation: 'createNote',
+            sectionId: localNote.section_id,
+            payload: noteData,
+            id: newNote ? newNote.id : null
+          })
+        }
         console.log('Заметка создана')
       }
       catch (error) {
@@ -172,7 +175,7 @@ export function NotePage() {
           <Text style={styles.label}>{localNote.map.address !== undefined ? localNote.map.address : 'Метка на карте не выбрана'}</Text>
 
           <TouchableOpacity style={styles.buttonMap}
-            onPress={() => navigation.navigate('MapPage', { note: localNote})}>
+            onPress={() => navigation.navigate('MapPage', { note: localNote })}>
             <Text>Открыть карту</Text>
           </TouchableOpacity>
         </View>

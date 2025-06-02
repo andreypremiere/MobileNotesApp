@@ -28,22 +28,26 @@ export function ChapterPage() {
   });
 
   const handleSave = async () => {
+    let newChapterAPI = null
     if (isCreating) {
       if (token) {
-        const newChapter = await createSection({ title: localChapter.title, subtitle: localChapter.subtitle },
-          token)
-      }
-      else {
-        await logAction({
-          operation: 'createSection',
-          payload: { title: localChapter.title, subtitle: localChapter.subtitle }
-        })
-        // В файл
+        newChapterAPI = await createSection({ title: localChapter.title, subtitle: localChapter.subtitle },
+          token, null)
       }
 
       if (db) {
         try {
-          await SectionRepository.create(db, { title: localChapter.title, subtitle: localChapter.subtitle })
+          const newSection = await SectionRepository.create(db, 
+            { title: localChapter.title, subtitle: localChapter.subtitle },
+          newChapterAPI? newChapterAPI.id : null)
+          if (!token) {
+            await logAction({
+              operation: 'createSection',
+              payload: { title: localChapter.title, subtitle: localChapter.subtitle },
+              id: newSection.id
+            })
+            // В файл
+          }
         }
         catch (error) {
           console.log('Ошибка при добавлении в sqlite', error)
@@ -68,11 +72,11 @@ export function ChapterPage() {
     }
     else {
       await logAction({
-          operation: 'updateSection',
-          sectionId: chapter.id,
-          payload: { title: localChapter.title, subtitle: localChapter.subtitle }
-        })
-        // В файл
+        operation: 'updateSection',
+        sectionId: chapter.id,
+        payload: { title: localChapter.title, subtitle: localChapter.subtitle }
+      })
+      // В файл
     }
     if (db) {
       try {

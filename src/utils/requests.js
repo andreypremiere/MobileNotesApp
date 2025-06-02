@@ -62,7 +62,7 @@ export async function getSection(sectionId, accessToken) {
     }
 }
 
-export async function createSection(sectionData, accessToken) {
+export async function createSection(sectionData, accessToken, idSaved) {
     try {
         const response = await fetch(`${URL_PATH}/sections`, {
             method: 'POST',
@@ -70,7 +70,7 @@ export async function createSection(sectionData, accessToken) {
                 'Authorization': `Bearer ${accessToken.trim()}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(sectionData)
+            body: JSON.stringify({...sectionData, id: idSaved})
         });
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         return await response.json();
@@ -110,7 +110,7 @@ export async function deleteSection(sectionId, accessToken) {
     }
 }
 
-export async function createNote(sectionId, noteData, accessToken) {
+export async function createNote(sectionId, noteData, accessToken, id) {
     try {
         const response = await fetch(`${URL_PATH}/sections/${sectionId}/notes`, {
             method: 'POST',
@@ -118,7 +118,7 @@ export async function createNote(sectionId, noteData, accessToken) {
                 'Authorization': `Bearer ${accessToken.trim()}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(noteData)
+            body: JSON.stringify({...noteData, id: id})
         });
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         return await response.json();

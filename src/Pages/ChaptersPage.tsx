@@ -15,11 +15,17 @@ import { getSections } from '../utils/requests';
 import { syncActions } from '../utils/syncUtils';
 
 export function ChaptersPage() {
+  // Локальное состояние: список разделов (chapters)
   const [chapters, setChapters] = useState([])
+  // Хук навигации для перехода между страницами
   const navigation = useNavigation();
+  // Получаем объект базы данных из контекста
   const db = useDatabase();
+  // Получаем токен и функцию его изменения из контекста авторизации
   const { token, setToken } = useContext(AuthContext);
+  // Состояние для функции обработки аккаунта (вход/выход)
   const [handleFunctionAccount, setHandleFunctionAccount] = useState(() => { })
+  // Получаем nickname и функцию его изменения из контекста авторизации
   const { nickname, setNickname } = useContext(AuthContext);
 
   useEffect(() => {

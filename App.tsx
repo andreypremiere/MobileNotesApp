@@ -16,14 +16,20 @@ import { DatabaseProvider } from './src/context/databaseContext'
 
 // npx react-native run-android
 
+// создаёт объект навигатора для приложения на React Native
+// управляет переходами между экранами (navigation stack)
 const Stack = createNativeStackNavigator();
 
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
+  // состояние статуса загрузки данных
   const [isLoading, setIsLoading] = useState(false)
 
+  // пытается получить токен и nickname из локального хранилища
+  // asyncstorage лучше заменить на securestorage
+  // если успешно, то устанавливает эти значения и меняет статус isLoading
   useEffect(() => {
     const loadData = async () => {
       const savedToken = await AsyncStorage.getItem('jwtToken');
@@ -38,6 +44,8 @@ export default function App() {
 
   if (isLoading) {
     return (
+      // Provider — это специальный компонент‑обёртка из createContext, который передаёт данные 
+      // в контекст всем дочерним компонентам. 
       <AuthContext.Provider value={{ token, setToken, nickname, setNickname }}>
         <DatabaseProvider>
           <StatusBar barStyle="light-content" />

@@ -1,4 +1,4 @@
-const URL_PATH = 'https://web-production-d616.up.railway.app';
+const URL_PATH = 'http://192.168.0.102:8000';
 
 
 export async function registerUser(nickname, password) {
@@ -70,7 +70,7 @@ export async function createSection(sectionData, accessToken, idSaved) {
                 'Authorization': `Bearer ${accessToken.trim()}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({...sectionData, id: idSaved})
+            body: JSON.stringify({ ...sectionData, id: idSaved })
         });
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         return await response.json();
@@ -118,7 +118,7 @@ export async function createNote(sectionId, noteData, accessToken, id) {
                 'Authorization': `Bearer ${accessToken.trim()}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({...noteData, id: id})
+            body: JSON.stringify({ ...noteData, id: id })
         });
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         return await response.json();

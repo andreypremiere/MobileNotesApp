@@ -31,9 +31,13 @@ export function Chapter({ chapter, setChapters, chapters,
     <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotesPage', { chapterId: chapter.id })}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{chapter.title}</Text>
-        <Text style={styles.sub_title}>{chapter.subtitle}</Text>
+        <Text style={styles.sub_title}>22.09.2025 20:40</Text>
       </View>
-      <View style={styles.elementsContainer}>
+      <View>
+        <Text style={styles.sub_title_right}>Приоритет: 7</Text>
+        <Text style={styles.sub_title_right}>Сложность: 1</Text>
+      </View>
+      {/* <View style={styles.elementsContainer}>
         <TouchableOpacity
           style={styles.iconWrapper}
           onPress={() =>
@@ -47,7 +51,7 @@ export function Chapter({ chapter, setChapters, chapters,
         <TouchableOpacity style={styles.iconWrapper} onPress={() => { handleDeleteSection() }}>
           <Delete />
         </TouchableOpacity>
-      </View>
+      </View> */}
     </TouchableOpacity>
   );
 }
@@ -66,7 +70,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   title: {
     textAlign: 'left',
@@ -75,6 +79,11 @@ const styles = StyleSheet.create({
   },
   sub_title: {
     textAlign: 'left',
+    fontSize: 14,
+    fontWeight: '400',
+  },
+  sub_title_right: {
+    textAlign: 'right',
     fontSize: 12,
     fontWeight: '400',
   },

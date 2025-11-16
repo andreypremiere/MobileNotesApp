@@ -17,19 +17,6 @@ export const DatabaseProvider = ({ children }) => {
           location: 'default',
         });
 
-        await database.transaction(async tx => {
-          await tx.executeSql(
-            `SELECT name FROM sqlite_master WHERE type='table' AND name='sections';`,
-            [],
-            (_, { rows }) => {
-              if (rows.length > 0) {
-                console.log('Таблица sections уже существует');
-              } 
-            }
-          );
-        });
-
-
         // Транзакция для включения внешних ключей
         await database.transaction(async tx => {
           await tx.executeSql(

@@ -28,56 +28,25 @@ export function ChapterPage() {
   });
 
   const handleSave = async () => {
-    let newChapterAPI = null
     if (isCreating) {
-      if (token) {
-        newChapterAPI = await createSection({ title: localChapter.title, subtitle: localChapter.subtitle },
-          token, null)
-      }
-
       if (db) {
+        var newSection;
         try {
-          const newSection = await SectionRepository.create(db, 
+          newSection = await SectionRepository.create(db,
             { title: localChapter.title, subtitle: localChapter.subtitle },
-          newChapterAPI? newChapterAPI.id : null)
-          if (!token) {
-            await logAction({
-              operation: 'createSection',
-              payload: { title: localChapter.title, subtitle: localChapter.subtitle },
-              id: newSection.id
-            })
-            // В файл
-          }
+            null)
         }
         catch (error) {
           console.log('Ошибка при добавлении в sqlite', error)
         }
-
       }
 
-      // console.log('Созданный раздел', newChapter)
-      // handleAddChapter();
+      console.log('Созданный раздел', newSection)
     }
     navigation.goBack();
   };
 
   const handleUpdate = async () => {
-    // Здесь можно вызвать метод обновления в SQLite
-    // console.log('Обновление раздела', localChapter);
-    if (token) {
-      await updateSection(chapter.id, {
-        title: localChapter.title,
-        subtitle: localChapter.subtitle
-      }, token)
-    }
-    else {
-      await logAction({
-        operation: 'updateSection',
-        sectionId: chapter.id,
-        payload: { title: localChapter.title, subtitle: localChapter.subtitle }
-      })
-      // В файл
-    }
     if (db) {
       try {
         await SectionRepository.update(db, chapter.id, { title: localChapter.title, subtitle: localChapter.subtitle })
@@ -85,11 +54,7 @@ export function ChapterPage() {
       catch (error) {
         console.log('Ошибка при добавлении в sqlite', error)
       }
-
     }
-
-    // handleAddChapter();
-
     navigation.goBack();
   };
 

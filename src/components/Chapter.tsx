@@ -19,22 +19,12 @@ export function Chapter({ chapter, setChapters, chapters,
   const db = useDatabase();
 
   const handleDeleteSection = async () => {
-    if (token) {
-      await deleteSection(chapter.id, token)
-    }
-    else {
-      await logAction({
-        operation: 'deleteSection', 
-        sectionId: chapter.id
-      })
-    }
     if (db) {
       await SectionRepository.delete(db, chapter.id)
     }
 
     const updatedChapters = chapters.filter((ch) => ch.id !== chapter.id);
     setChapters(updatedChapters);
-
   };
 
   return (
@@ -49,7 +39,6 @@ export function Chapter({ chapter, setChapters, chapters,
           onPress={() =>
             navigation.navigate('ChapterPage', {
               chapter: chapter,
-              // handleAddChapter: handleUpdateChapter
             })
           }
         >

@@ -1,18 +1,15 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import Logo from '../assets/icons/account.svg';
-import { Note } from '../components/Note';
-import Back from '../assets/icons/button-back.svg';
 import { Chapter } from '../components/Chapter';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Plus from '../assets/icons/Plus.svg';
 import Logout from '../assets/icons/exit.svg'
 import { useDatabase } from '../context/databaseContext';
 import SectionRepository from '../utils/sectionRepo';
-import { AuthContext } from '../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSections } from '../utils/requests';
 import { syncActions } from '../utils/syncUtils';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 export function ChaptersPage() {
   // Локальное состояние: список разделов (chapters)
@@ -21,74 +18,31 @@ export function ChaptersPage() {
   const navigation = useNavigation();
   // Получаем объект базы данных из контекста
   const db = useDatabase();
-  // Получаем токен и функцию его изменения из контекста авторизации
-  const { token, setToken } = useContext(AuthContext);
-  // Состояние для функции обработки аккаунта (вход/выход)
-  const [handleFunctionAccount, setHandleFunctionAccount] = useState(() => { })
-  // Получаем nickname и функцию его изменения из контекста авторизации
-  const { nickname, setNickname } = useContext(AuthContext);
 
-  useEffect(() => {
-    if (token) {
-      AsyncStorage.setItem('jwtToken', token);
-    } else {
-      AsyncStorage.removeItem('jwtToken'); // Удаляет токен, если он отсутствует
-    }
-  }, [token]);
-
-  useEffect(() => {
-    if (nickname) {
-      AsyncStorage.setItem('nickname', nickname);
-      setHandleFunctionAccount(() => () => {
-        setToken(null);
-        setNickname(null);
-      })
-
-    } else {
-      AsyncStorage.removeItem('nickname'); // Удаляет токен, если он отсутствует
-      setHandleFunctionAccount(() => () => navigation.navigate('LoginPage'))
-    }
-  }, [nickname]);
-
-  const fetchData = async () => {
-    await syncActions(token)
-    if (token) {
-      try {
-        const sections = await getSections(token);
-        setChapters(sections)
-        console.log('Полученные разделы по api:', sections);
-      } catch (error) {
-        console.error('Ошибка при получении разделов:', error);
-      }
-    } else {
-      if (db) {
-        try {
-          const data = await SectionRepository.getAll(db);
-          if (!token) {
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchData = async () => {
+        if (db) {
+          try {
+            const data = await SectionRepository.getAll(db);
             setChapters(data);
+            console.log('Получены категории через SQLite:', data);
+          } catch (error) {
+            console.error('Ошибка при получении данных:', error);
           }
-          console.log('Записи получены через SQLite:', data);
-        } catch (error) {
-          console.error('Ошибка при получении данных:', error);
         }
       }
 
-    }
-  };
-
-  // useEffect(() => {
-  //   fetchData();
-  // }, [nickname, db]);
-
-  useFocusEffect(
-    useCallback(() => {
       fetchData();
-    }, [token, db])
+
+      return () => {
+        // cleanup при уходе с экрана (необязательно)
+      };
+    }, [db])
   );
 
   const handleCreateSection = () => {
     navigation.navigate('ChapterPage', {
-      // handleAddChapter: addSection,
       chapter: null,
     });
   };
@@ -97,14 +51,10 @@ export function ChaptersPage() {
     <View style={styles.screen}>
       <View style={styles.navbar}>
         <View style={styles.statusBar}>
-          <Text style={styles.title}>{nickname ? nickname : 'Войдите для синхронизации'}</Text>
-          {/* <Text style={styles.status}>offline</Text> */}
+          <Text style={styles.title}>{'Здесь должен быть поиск и фильтры'}</Text>
         </View>
-        <TouchableOpacity style={styles.iconWrapper} onPress={handleFunctionAccount}>
-          {!nickname ?
-            <Logo width={32} height={32} fill='' /> :
-            <Logout width={32} height={32} fill='' />
-          }
+        <TouchableOpacity style={styles.iconWrapper} onPress={() => { }}>
+          <Logout width={32} height={32} fill='' />
         </TouchableOpacity>
       </View>
       <View>

@@ -28,14 +28,22 @@ export function Chapter({ chapter, setChapters, chapters,
   };
 
   return (
-    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('NotesPage', { chapterId: chapter.id })}>
+    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChapterPage', { chapter: chapter })}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{chapter.title}</Text>
-        <Text style={styles.sub_title}>22.09.2025 20:40</Text>
+        <Text style={styles.sub_title}>{chapter.datetime
+          ? new Date(chapter.datetime).toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+          : ''}</Text>
       </View>
       <View>
-        <Text style={styles.sub_title_right}>Приоритет: 7</Text>
-        <Text style={styles.sub_title_right}>Сложность: 1</Text>
+        <Text style={styles.sub_title_right}>Приоритет: {chapter.priority ? chapter.priority : '-'}</Text>
+        <Text style={styles.sub_title_right}>Сложность: {chapter.complexity ? chapter.complexity : '-'}</Text>
       </View>
       {/* <View style={styles.elementsContainer}>
         <TouchableOpacity

@@ -11,10 +11,10 @@ import { createSection, updateSection } from '../utils/requests';
 import { useDatabase } from '../context/databaseContext';
 import SectionRepository from '../utils/sectionRepo'
 import { logAction } from '../utils/loggingUtils';
+import { TextInputMask } from 'react-native-masked-text';
 
 
 export function ChapterPage() {
-  const { token } = useContext(AuthContext)
   const navigation = useNavigation();
   const db = useDatabase();
   const route = useRoute();
@@ -24,35 +24,44 @@ export function ChapterPage() {
 
   const [localChapter, setLocalChapter] = useState({
     title: chapter?.title || '',
-    subtitle: chapter?.subtitle || '',
+    description: chapter?.description || '',
+    datetime: chapter?.datetime || '',
+    priority: chapter?.priority?.toString() || '',
+    complexity: chapter?.complexity?.toString() || ''
   });
 
-  const handleSave = async () => {
-    if (isCreating) {
-      if (db) {
-        var newSection;
-        try {
-          newSection = await SectionRepository.create(db,
-            { title: localChapter.title, subtitle: localChapter.subtitle },
-            null)
-        }
-        catch (error) {
-          console.log('Ошибка при добавлении в sqlite', error)
-        }
-      }
 
-      console.log('Созданный раздел', newSection)
+
+  const handleSave = async () => {
+    if (isCreating && db) {
+      try {
+        const newSection = await SectionRepository.create(db, {
+          title: localChapter.title,
+          description: localChapter.description,
+          datetime: localChapter.datetime,
+          priority: parseInt(localChapter.priority) || 0,
+          complexity: parseInt(localChapter.complexity) || 0,
+        });
+        console.log('Созданный раздел', newSection);
+      } catch (error) {
+        console.log('Ошибка при добавлении в sqlite', error);
+      }
     }
     navigation.goBack();
   };
 
   const handleUpdate = async () => {
-    if (db) {
+    if (db && chapter) {
       try {
-        await SectionRepository.update(db, chapter.id, { title: localChapter.title, subtitle: localChapter.subtitle })
-      }
-      catch (error) {
-        console.log('Ошибка при добавлении в sqlite', error)
+        await SectionRepository.update(db, chapter.id, {
+          title: localChapter.title,
+          description: localChapter.description,
+          datetime: localChapter.datetime,
+          priority: parseInt(localChapter.priority) || 0,
+          complexity: parseInt(localChapter.complexity) || 0,
+        });
+      } catch (error) {
+        console.log('Ошибка при обновлении в sqlite', error);
       }
     }
     navigation.goBack();
@@ -63,11 +72,11 @@ export function ChapterPage() {
       <View style={styles.navbar}>
         <View style={styles.statusBar}>
           <Text style={styles.title_2}>
-            {isCreating ? 'Создание раздела' : 'Редактирование раздела'}
+            {isCreating ? 'Создание задачи' : 'Редактирование задачи'}
           </Text>
         </View>
-        <TouchableOpacity style={styles.iconWrapperLeft}>
-          <Back width={32} height={32} fill="" onPress={() => navigation.goBack()} />
+        <TouchableOpacity style={styles.iconWrapperLeft} onPress={() => navigation.goBack()}>
+          <Back width={32} height={32} />
         </TouchableOpacity>
       </View>
 
@@ -76,33 +85,54 @@ export function ChapterPage() {
           <TextInput
             style={styles.input}
             placeholder="Заголовок"
-            placeholderTextColor="#888888"
+            placeholderTextColor="#888"
             value={localChapter.title}
+            onChangeText={(text) => setLocalChapter((prev) => ({ ...prev, title: text }))}
+          />
+
+          <TextInput
+            style={styles.textArea}
+            placeholder="Описание"
+            placeholderTextColor="#888"
+            multiline
+            value={localChapter.description}
+            onChangeText={(text) => setLocalChapter((prev) => ({ ...prev, description: text }))}
+          />
+
+          <TextInputMask
+            type={'datetime'}
+            options={{
+              format: 'YYYY-MM-DD HH:mm' // формат даты/времени
+            }}
+            value={localChapter.datetime}
             onChangeText={(text) =>
-              setLocalChapter((prev) => ({ ...prev, title: text }))
+              setLocalChapter((prev) => ({ ...prev, datetime: text }))
             }
+            style={styles.input}
+            placeholder="Дата и время (YYYY-MM-DD HH:mm)"
+            placeholderTextColor="#888"
           />
 
           <TextInput
             style={styles.input}
-            placeholder="Подзаголовок (до 150 символов)"
-            placeholderTextColor="#888888"
-            value={localChapter.subtitle}
-            onChangeText={(text) => {
-              if (text.length <= 150) {
-                setLocalChapter((prev) => ({ ...prev, subtitle: text }));
-              }
-            }}
+            placeholder="Приоритет (число)"
+            placeholderTextColor="#888"
+            keyboardType="numeric"
+            value={localChapter.priority}
+            onChangeText={(text) => setLocalChapter((prev) => ({ ...prev, priority: text }))}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Сложность (число)"
+            placeholderTextColor="#888"
+            keyboardType="numeric"
+            value={localChapter.complexity}
+            onChangeText={(text) => setLocalChapter((prev) => ({ ...prev, complexity: text }))}
           />
         </View>
 
         <View style={styles.buttonRow}>
-          {/* {!isCreating && (
-            <TouchableOpacity style={styles.buttonMap} onPress={() => console.log('Удалить')}>
-              <Text style={styles.buttonText}>Удалить</Text>
-            </TouchableOpacity>
-          )} */}
-
           <TouchableOpacity
             style={styles.buttonMap}
             onPress={isCreating ? handleSave : handleUpdate}
@@ -115,85 +145,18 @@ export function ChapterPage() {
   );
 }
 
-
 const styles = StyleSheet.create({
-  buttonMap: {
-    backgroundColor: '#f9f9f9',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    alignSelf: 'flex-start',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  component: {
-    flex: 1,
-  },
-  screen: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  suggestionItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    backgroundColor: '#f0f0f0',
-  },
-  statusBar: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 1,
-  },
+  screen: { flex: 1, backgroundColor: '#fff' },
   navbar: {
-    flexDirection: 'row',       // элементы в строку
-    alignItems: 'center',       // по вертикали по центру
-    justifyContent: 'center', // максимальное расстояние между текстом и иконкой
-    // paddingHorizontal: 16,
-    height: 50,                 // или свой размер
-    // backgroundColor: '#555',
-  },
-  title: {
-    // flex: 1,                   // текст занимает всё доступное место
-    // textAlign: 'center',       // текст по центру
-    fontSize: 12,
-    fontWeight: '400',
-  },
-  title_2: {
-    textAlign: 'center',       // текст по центру
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 10,
-  },
-  frame: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff',
-  },
-  status: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  iconWrapper: {
-    position: 'absolute',
-    right: 0,
-
-    width: 50,
-    height: 50,
-
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  iconWrapperLeft: {
-    position: 'absolute',
-    left: 0,
-
-    width: 50,
-    height: 50,
-
     justifyContent: 'center',
-    alignItems: 'center',
+    height: 50,
   },
+  statusBar: { alignItems: 'center', justifyContent: 'center' },
+  title_2: { textAlign: 'center', fontSize: 16, fontWeight: '500', marginBottom: 10 },
+  frame: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  component: { flex: 1 },
   input: {
     height: 48,
     borderColor: '#ccc',
@@ -205,42 +168,33 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   textArea: {
-    height: 200,
+    height: 100,
     borderColor: '#ccc',
-    color: 'black',
+    textAlignVertical: 'top',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     marginBottom: 12,
     backgroundColor: '#f9f9f9',
+    color: 'black',
   },
-  label: {
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  mapContainer: {
-    height: 200,
-    marginBottom: 16,
+  buttonRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 },
+  buttonMap: {
+    backgroundColor: '#f9f9f9',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderColor: '#ccc',
+    borderWidth: 1,
     borderRadius: 8,
-    overflow: 'hidden',
   },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 12,
-  },
-  button: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 6,
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  buttonText: {
-    // color: '',
-    textAlign: 'center',
-    fontWeight: '600',
+  buttonText: { textAlign: 'center', fontWeight: '600' },
+  iconWrapperLeft: {
+    position: 'absolute',
+    left: 0,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

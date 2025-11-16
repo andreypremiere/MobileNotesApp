@@ -19,6 +19,7 @@
     "react-native": "0.79.2",
     "react-native-fs": "^2.20.0",
     "react-native-maps": "^1.23.8",
+    "react-native-masked-text": "^1.13.0",
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "^4.11.0",
     "react-native-sqlite-storage": "^6.0.1",

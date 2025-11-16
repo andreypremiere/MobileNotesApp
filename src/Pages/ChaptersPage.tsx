@@ -78,7 +78,7 @@ export function ChaptersPage() {
           <TouchableOpacity style={styles.iconWrapper} onPress={() => {}}>
             <Filter width={30} height={30} fill=''/>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconPlus} onPress={() => {}}>
+          <TouchableOpacity style={styles.iconPlus} onPress={() => navigation.navigate('ChapterPage', {chapter: null})}>
             <Plus />
           </TouchableOpacity>
           <View style={styles.containerButtons}>

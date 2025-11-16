@@ -30,14 +30,17 @@ export const DatabaseProvider = ({ children }) => {
           );
         });
 
-        // Транзакция для создания таблицы sections
+        // Транзакция для создания таблицы задач
         await database.transaction(async tx => {
           await tx.executeSql(
             `
             CREATE TABLE IF NOT EXISTS sections (
               id TEXT PRIMARY KEY,
               title TEXT NOT NULL,
-              subtitle TEXT
+              description TEXT,
+              datetime TEXT,       -- хранить ISO строку "2025-11-16 22:30:00"
+              priority INTEGER,    -- приоритет (например, 1-10)
+              complexity INTEGER   -- сложность (например, 1-5)
             );
             `,
             [],
@@ -49,24 +52,25 @@ export const DatabaseProvider = ({ children }) => {
           );
         });
 
-        // Транзакция для создания таблицы notes
+        // Транзакция для создания таблицы подзадач
         await database.transaction(async tx => {
           await tx.executeSql(
             `
-            CREATE TABLE IF NOT EXISTS notes (
+            CREATE TABLE IF NOT EXISTS subtasks (
               id TEXT PRIMARY KEY,
-              section_id TEXT NOT NULL,
+              section_id TEXT NOT NULL,   -- внешний ключ на главную задачу/раздел
               title TEXT NOT NULL,
-              subtitle TEXT,
-              content TEXT,
-              map TEXT,
+              description TEXT,
+              datetime TEXT,              -- дедлайн (ISO строка "YYYY-MM-DD HH:mm:ss")
+              priority INTEGER,
+              complexity INTEGER,
               FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE
             );
             `,
             [],
-            () => console.log('Таблица notes создана'),
+            () => console.log('Таблица subtasks создана'),
             (_, error) => {
-              console.error('Ошибка создания таблицы notes:', error);
+              console.error('Ошибка создания таблицы subtasks:', error);
               throw error;
             }
           );

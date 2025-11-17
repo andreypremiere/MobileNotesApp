@@ -169,7 +169,8 @@ const styles = StyleSheet.create({
   },
   frame: {
     gap: 1,
-    alignItems: 'center'
+    alignItems: 'center',
+    paddingHorizontal: 4
   },
   status: {
     fontSize: 12,

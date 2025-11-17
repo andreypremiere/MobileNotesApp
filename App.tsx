@@ -8,6 +8,7 @@ import { MapPage } from './src/Pages/MapPage';
 import { ChaptersPage } from './src/Pages/ChaptersPage';
 import { ChapterPage } from './src/Pages/ChapterPage';
 import { DatabaseProvider } from './src/context/databaseContext'
+import { SubtaskPage } from './src/Pages/SubtaskPage';
 
 // npx react-native run-android
 
@@ -26,9 +27,7 @@ export default function App() {
         <Stack.Navigator initialRouteName="ChaptersPage" screenOptions={{ headerShown: false }}>
           <Stack.Screen name='ChaptersPage' component={ChaptersPage} />
           <Stack.Screen name='ChapterPage' component={ChapterPage} />
-          {/* <Stack.Screen name="NotesPage" component={NotesPage} />
-              <Stack.Screen name="NotePage" component={NotePage} />
-              <Stack.Screen name="MapPage" component={MapPage} /> */}
+          <Stack.Screen name="SubtaskPage" component={SubtaskPage} />
         </Stack.Navigator>
       </NavigationContainer>
     </DatabaseProvider>

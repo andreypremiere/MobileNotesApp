@@ -11,7 +11,7 @@ import { deleteSection, getSections } from '../utils/requests';
 import { logAction } from '../utils/loggingUtils';
 
 
-export function Chapter({ chapter, setChapters, chapters,
+export function Subtask({ chapter, setChapters, chapters,
   // handleUpdateChapter
 }) {
   const { token } = useContext(AuthContext);

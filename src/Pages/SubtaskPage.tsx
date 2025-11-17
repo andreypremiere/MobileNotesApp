@@ -15,8 +15,9 @@ import { TextInputMask } from 'react-native-masked-text';
 import Plus from '../assets/icons/Plus.svg';
 import { Subtask } from '../components/Subtask';
 
+// Переделать 
 
-export function ChapterPage() {
+export function SubtaskPage() {
   const navigation = useNavigation();
   const db = useDatabase();
   const route = useRoute();
@@ -31,8 +32,6 @@ export function ChapterPage() {
     priority: chapter?.priority?.toString() || '',
     complexity: chapter?.complexity?.toString() || ''
   });
-
-
 
   const handleSave = async () => {
     if (isCreating && db) {
@@ -120,7 +119,7 @@ export function ChapterPage() {
     <View style={styles.screen}>
       <View style={styles.navbar}>
         <Text style={styles.title_2}>
-          {isCreating ? 'Создание задачи' : 'Редактирование задачи'}
+          {isCreating ? 'Создание подзадачи' : 'Редактирование подзадачи'}
         </Text>
         <TouchableOpacity style={styles.iconWrapperLeft} onPress={() => navigation.goBack()}>
           <Back width={32} height={32} />
@@ -178,29 +177,6 @@ export function ChapterPage() {
             onChangeText={(text) => setLocalChapter((prev) => ({ ...prev, complexity: text }))}
           />
         </View>
-
-        <View style={styles.navbarTasks}>
-          <Text style={styles.titleSubtasks}>Подзадачи</Text>
-          <TouchableOpacity style={styles.iconPlus} onPress={() => {}}>
-            <Plus />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={styles.subTasksView}>
-          {testChapters.map((obj) => (
-            <Subtask
-              key={obj.id}
-              chapter={obj}
-              setChapters={() => { }} // можно заглушку
-              chapters={testChapters}
-            />
-          ))}
-        </ScrollView>
-
-        <View style={{
-          flex: 1,
-          // backgroundColor: '#a47f7fff' 
-        }} />
 
         <View style={isCreating ? styles.buttonRow : styles.buttonRow2}>
           {!isCreating && (

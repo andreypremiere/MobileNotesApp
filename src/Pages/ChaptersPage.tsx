@@ -14,6 +14,7 @@ import { getSections } from '../utils/requests';
 import { syncActions } from '../utils/syncUtils';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { WidgetUniversal } from '../components/WidgetUniversal';
+import CloseIcon from '../assets/icons/Close.svg';
 
 export function ChaptersPage() {
   // Локальное состояние: список разделов (chapters)
@@ -53,7 +54,7 @@ export function ChaptersPage() {
       <View style={styles.screen}>
         {/* Первая панель */}
         <View style={styles.navbar}>
-          <View style={styles.container}>
+          <View style={styles.searchContainer}>
             <TextInput
               style={styles.input}
               placeholder="Поиск"
@@ -61,6 +62,17 @@ export function ChaptersPage() {
               value={text}
               onChangeText={setText}
             />
+            {text.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => {
+                  setText('');
+                  Keyboard.dismiss(); // убираем фокус
+                }}
+              >
+                <CloseIcon width={20} height={20} fill="#888" />
+              </TouchableOpacity>
+            )}
           </View>
           <TouchableOpacity style={styles.iconWrapper} onPress={() => { }}>
             <Calendar width={30} height={30} fill='' />
@@ -102,11 +114,21 @@ export function ChaptersPage() {
         {/* Задачи */}
         <ScrollView contentContainerStyle={styles.frame}>
           {chapters
+            // фильтрация по режиму
             .filter(obj => {
               if (active === 'tasks') return obj.type === 'task';
               if (active === 'subtasks') return obj.type === 'subtask';
               return true; // для режима "all" показываем всё
             })
+            // фильтрация по поиску
+            .filter(obj => {
+              if (!text.trim()) return true; // если строка поиска пустая — показываем всё
+              const query = text.toLowerCase();
+              const title = (obj.title || '').toLowerCase();
+              const desc = (obj.description || '').toLowerCase();
+              return title.includes(query) || desc.includes(query);
+            })
+            // рендер
             .map((obj) => (
               <WidgetUniversal
                 key={obj.id}
@@ -122,17 +144,6 @@ export function ChaptersPage() {
 }
 
 const styles = StyleSheet.create({
-  input: {
-    width: '100%',          // ширина поля (можно фиксированную, например 300)
-    height: 40,            // высота поля
-    paddingHorizontal: 12, // внутренний отступ слева/справа
-    paddingVertical: 8,    // внутренний отступ сверху/снизу
-    borderWidth: 1,        // толщина рамки
-    borderColor: '#ccc',   // цвет рамки
-    borderRadius: 10,      // скругление углов
-    fontSize: 16,          // размер текста
-    backgroundColor: 'transparent', // фон поля
-  },
   container: {
     paddingHorizontal: 10,
     flex: 1,
@@ -146,70 +157,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     height: 50,
-    paddingRight: 2
+    paddingRight: 2,
+    paddingLeft: 6,
   },
   navbar2: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-start',
     height: 50,
-    // paddingHorizontal: 12,
-    // paddingRight: 2,
-
-  },
-  title: {
-    fontSize: 12,
-    fontWeight: '400',
-  },
-  title_2: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 10,
-    marginTop: 6
   },
   frame: {
     gap: 1,
     alignItems: 'center',
-    paddingHorizontal: 4
-  },
-  status: {
-    fontSize: 12,
-    fontWeight: '600',
+    paddingHorizontal: 4,
   },
   iconWrapper: {
     width: 50,
     height: 50,
-
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconWrapperLeft: {
-    position: 'absolute',
-    left: 0,
-
-    width: 50,
-    height: 50,
-
     justifyContent: 'center',
     alignItems: 'center',
   },
   iconPlus: {
     position: 'absolute',
     right: 12,
-    backgroundColor: '#fff', // Фон для лучшей видимости тени
-    borderRadius: 8, // Скругление углов для иконок
-    padding: 6, // Внутренний отступ для увеличения области нажатия
-    shadowColor: '#000', // Цвет тени
-    shadowOffset: { width: 0, height: 2 }, // Смещение тени
-    shadowOpacity: 0.3, // Прозрачность тени
-    shadowRadius: 3, // Радиус размытия тени
-    elevation: 4, // Тень для Android
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
   },
   containerButtons: {
-    flexDirection: 'row', // кнопки в строку
+    flexDirection: 'row',
     justifyContent: 'space-around',
-    // marginVertical: 20,
   },
   button: {
     paddingVertical: 10,
@@ -222,7 +204,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
-    elevation: 4, // тень для Android
+    elevation: 4,
   },
   text: {
     fontSize: 14,
@@ -231,5 +213,23 @@ const styles = StyleSheet.create({
   activeText: {
     fontWeight: '600',
     color: '#000000ff',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    flex: 1,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
+    color: '#000',
+  },
+  clearButton: {
+    padding: 6,
   },
 });

@@ -122,7 +122,7 @@ export function ChaptersPage() {
           </TouchableOpacity>
         </View>
         {/* Вторая панель панель */}
-        <View style={styles.navbar2}>
+        {!calendarActive && <View style={styles.navbar2}>
           <TouchableOpacity
             style={filterActive ? styles.iconFilterActive : styles.iconFilter}
             onPress={() => setFilterActive(!filterActive)}
@@ -153,7 +153,7 @@ export function ChaptersPage() {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </View>}
 
         {/* Панель фильтра */}
         {filterActive && (
@@ -209,7 +209,7 @@ export function ChaptersPage() {
             </View>
 
             <TouchableOpacity
-              style={[styles.button, { marginTop: 20, backgroundColor: '#eee', alignSelf: 'flex-start' }]}
+              style={[styles.buttonReset, { marginTop: 20, backgroundColor: '#ffffffff', alignSelf: 'flex-start' }]}
               onPress={() => {
                 setSortBy('deadline');
                 setOrder('asc');
@@ -227,29 +227,47 @@ export function ChaptersPage() {
             <Text style={styles.calendarHeader}>
               {`${monthNames[month]} ${year}`}
             </Text>
-            <View style={styles.daysGrid}>
-              {calendarCells.map((day, index) => (
-                <View key={index} style={styles.dayTile}>
-                  {day ? (
-                    <>
-                      <Text style={styles.dayNumber}>{day}</Text>
-                      {tasksByDay[day] ? (
-                        <Text style={styles.taskCount}>{tasksByDay[day]} задач</Text>
-                      ) : null}
-                    </>
-                  ) : (
-                    <Text style={styles.dayNumber}></Text> // пустая плитка
-                  )}
-                </View>
+            {/* Дни недели */}
+            <View style={styles.weekRow}>
+              {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(day => (
+                <Text key={day} style={styles.weekDay}>{day}</Text>
               ))}
+            </View>
+            <View style={styles.daysGrid}>
+              {calendarCells.map((day, index) => {
+                const dateObj = day ? new Date(year, month, day) : null;
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.dayTile}
+                    disabled={!day}
+                    onPress={() => {
+                      if (day) {
+                        navigation.navigate('DayTasksPage', { date: dateObj.toISOString(), chapters: chapters });
+                      }
+                    }}
+                  >
+                    {day ? (
+                      <>
+                        <Text style={styles.dayNumber}>{day}</Text>
+                        {tasksByDay[day] ? (
+                          <Text style={styles.taskCount}>{tasksByDay[day]}</Text>
+                        ) : null}
+                      </>
+                    ) : (
+                      <Text style={styles.dayNumber}></Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {/* Кнопки листания */}
             <View style={styles.navMonth}>
-              <TouchableOpacity onPress={() => setCurrentDate(new Date(year, month - 1, 1))}>
+              <TouchableOpacity style={styles.buttonReset} onPress={() => setCurrentDate(new Date(year, month - 1, 1))}>
                 <Text>Предыдущий месяц</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setCurrentDate(new Date(year, month + 1, 1))}>
+              <TouchableOpacity style={styles.buttonReset} onPress={() => setCurrentDate(new Date(year, month + 1, 1))}>
                 <Text>Следующий месяц</Text>
               </TouchableOpacity>
             </View>
@@ -378,7 +396,7 @@ const styles = StyleSheet.create({
   containerButtons: {
     marginLeft: 4,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-start',
   },
   button: {
     paddingVertical: 10,
@@ -386,6 +404,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   activeButton: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  buttonReset: {
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 8,
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -454,17 +483,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginVertical: 8,
   },
-  calendarContainer: { padding: 10 },
+  calendarContainer: { paddingHorizontal: 2, paddingVertical: 10 },
   weekRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   weekDay: { flex: 1, textAlign: 'center', fontWeight: '600' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
   dayTile: {
     width: '14.28%', // 100% / 7 дней
     alignItems: 'center',
-    marginVertical: 6,
+    // marginVertical: 6,
+    borderWidth: 1,
+    borderColor: "#e6e6e6ff",
+    height: 40,
+    borderRadius: 8
   },
   dayNumber: { fontSize: 16, fontWeight: '500' },
-  taskCount: { fontSize: 10, color: '#ff0000ff' },
+  taskCount: { fontSize: 12, color: '#ff0000ff', fontWeight: 600 },
   navMonth: {
     flexDirection: 'row',
     justifyContent: 'space-between',

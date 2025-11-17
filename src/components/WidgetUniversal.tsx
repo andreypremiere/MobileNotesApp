@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         borderTopLeftRadius: 0,
         width: '100%',
-        marginVertical: 4,
+        marginVertical: 2,
     },
     item: {
         flexDirection: 'row',
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
         borderColor: 'black',
         borderRadius: 8,
         width: '100%',
-        marginVertical: 4,
+        marginVertical: 2,
     },
     textContainer: {
         flex: 1,

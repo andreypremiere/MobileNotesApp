@@ -9,6 +9,7 @@ import { ChaptersPage } from './src/Pages/ChaptersPage';
 import { ChapterPage } from './src/Pages/ChapterPage';
 import { DatabaseProvider } from './src/context/databaseContext'
 import { SubtaskPage } from './src/Pages/SubtaskPage';
+import { DayTasksPage } from './src/Pages/DayTasksPage';
 
 // npx react-native run-android
 
@@ -28,6 +29,7 @@ export default function App() {
           <Stack.Screen name='ChaptersPage' component={ChaptersPage} />
           <Stack.Screen name='ChapterPage' component={ChapterPage} />
           <Stack.Screen name="SubtaskPage" component={SubtaskPage} />
+          <Stack.Screen name="DayTasksPage" component={DayTasksPage} />
         </Stack.Navigator>
       </NavigationContainer>
     </DatabaseProvider>

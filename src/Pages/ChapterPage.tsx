@@ -6,7 +6,7 @@ import Back from '../assets/icons/button-back.svg';
 import { Chapter } from '../components/Chapter';
 import { Note } from '../components/Note';
 import MapView, { Marker } from 'react-native-maps';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { createSection, updateSection } from '../utils/requests';
 import { useDatabase } from '../context/databaseContext';
 import SectionRepository from '../utils/sectionRepo'
@@ -21,6 +21,7 @@ export function ChapterPage() {
   const db = useDatabase();
   const route = useRoute();
   const { chapter } = route.params || {};
+  const [subtasks, setSubtasks] = useState<any[]>([]);
 
   const isCreating = !chapter;
 
@@ -32,7 +33,30 @@ export function ChapterPage() {
     complexity: chapter?.complexity?.toString() || ''
   });
 
+  // Здесь подгрузка подзадач для задачи, если это редактирование
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchData = async () => {
+        if (db) {
+          try {
+            const data = await SectionRepository.getAllSubtasksById(db, chapter.id);
+            setSubtasks(data);
+            console.log('Получены подзадачи через SQLite:', data);
+          } catch (error) {
+            console.error('Ошибка при получении данных:', error);
+          }
+        }
+      }
 
+      if (!isCreating) {
+        fetchData();
+      }
+
+      return () => {
+        // cleanup при уходе с экрана (необязательно)
+      };
+    }, [db])
+  );
 
   const handleSave = async () => {
     if (isCreating && db) {
@@ -79,42 +103,6 @@ export function ChapterPage() {
     }
     navigation.goBack();
   };
-
-  const testChapters = [
-    {
-      id: 1,
-      title: 'Первая задача',
-      description: 'Описание первой тестовой задачи',
-      datetime: '2025-11-17 09:00',
-      priority: 1,
-      complexity: 2,
-    },
-    {
-      id: 2,
-      title: 'Вторая задача',
-      description: 'Описание второй тестовой задачи',
-      datetime: '2025-11-18 14:30',
-      priority: 2,
-      complexity: 3,
-    },
-    {
-      id: 3,
-      title: 'Третья задача',
-      description: 'Описание третьей тестовой задачи',
-      datetime: '2025-11-19 18:45',
-      priority: 3,
-      complexity: 1,
-    },
-    {
-      id: 4,
-      title: 'Третья задача',
-      description: 'Описание третьей тестовой задачи',
-      datetime: '2025-11-19 18:45',
-      priority: 3,
-      complexity: 1,
-    },
-  ];
-
 
   return (
     <View style={styles.screen}>
@@ -179,23 +167,27 @@ export function ChapterPage() {
           />
         </View>
 
-        <View style={styles.navbarTasks}>
-          <Text style={styles.titleSubtasks}>Подзадачи</Text>
-          <TouchableOpacity style={styles.iconPlus} onPress={() => {}}>
-            <Plus />
-          </TouchableOpacity>
-        </View>
+        {!isCreating && (
+          <>
+            <View style={styles.navbarTasks}>
+              <Text style={styles.titleSubtasks}>Подзадачи</Text>
+              <TouchableOpacity style={styles.iconPlus} onPress={() => navigation.navigate('SubtaskPage', {chapter: null, parentId: chapter.id})}>
+                <Plus />
+              </TouchableOpacity>
+            </View>
 
-        <ScrollView style={styles.subTasksView}>
-          {testChapters.map((obj) => (
-            <Subtask
-              key={obj.id}
-              chapter={obj}
-              setChapters={() => { }} // можно заглушку
-              chapters={testChapters}
-            />
-          ))}
-        </ScrollView>
+            <ScrollView style={styles.subTasksView}>
+              {subtasks.map((obj) => (
+                <Subtask
+                  key={obj.id}
+                  chapter={obj}
+                  setChapters={() => { }} // заглушка
+                  chapters={subtasks}
+                />
+              ))}
+            </ScrollView>
+          </>
+        )}
 
         <View style={{
           flex: 1,

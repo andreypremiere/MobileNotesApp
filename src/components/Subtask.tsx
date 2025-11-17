@@ -28,7 +28,7 @@ export function Subtask({ chapter, setChapters, chapters,
   };
 
   return (
-    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('ChapterPage', { chapter: chapter })}>
+    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('SubtaskPage', { chapter: chapter, parentId: chapter.section_id })}>
       <View style={styles.textContainer}>
         <Text style={styles.title}>{chapter.title}</Text>
         <Text style={styles.sub_title}>{chapter.datetime

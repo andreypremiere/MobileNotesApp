@@ -69,16 +69,16 @@ class SectionRepository {
   static async getAllSectionsWithSubtasks(db) {
     return new Promise((resolve, reject) => {
       db.transaction(tx => {
-        // сначала получаем все задачи
         tx.executeSql(
           `SELECT * FROM sections`,
           [],
           async (_, { rows }) => {
             const sections = [];
+
             for (let i = 0; i < rows.length; i++) {
               const section = rows.item(i);
 
-              // для каждой задачи получаем её подзадачи
+              // получаем подзадачи для каждой задачи
               const subtasks = await new Promise((res, rej) => {
                 db.transaction(tx2 => {
                   tx2.executeSql(
@@ -98,10 +98,70 @@ class SectionRepository {
 
               sections.push({
                 ...section,
-                subtasks,
+                subtasks, // добавляем массив подзадач внутрь объекта задачи
               });
             }
+
             resolve(sections);
+          },
+          (_, error) => reject(error)
+        );
+      }, reject);
+    });
+  }
+
+  /**
+   * Получить одномерный список задач и подзадач
+   * @param {Object} db - база данных
+   * @returns {Promise<Array>} - список элементов {id, title, ..., type: 'task' | 'subtask'}
+   */
+  static async getFlatList(db) {
+    return new Promise((resolve, reject) => {
+      db.transaction(tx => {
+        tx.executeSql(
+          `SELECT * FROM sections`,
+          [],
+          async (_, { rows }) => {
+            const flatList = [];
+
+            for (let i = 0; i < rows.length; i++) {
+              const section = rows.item(i);
+
+              // добавляем задачу
+              flatList.push({
+                ...section,
+                type: 'task',
+              });
+
+              // получаем подзадачи для этой задачи
+              const subtasks = await new Promise((res, rej) => {
+                db.transaction(tx2 => {
+                  tx2.executeSql(
+                    `SELECT * FROM subtasks WHERE section_id = ?`,
+                    [section.id],
+                    (_, { rows }) => {
+                      const subs = [];
+                      for (let j = 0; j < rows.length; j++) {
+                        subs.push(rows.item(j));
+                      }
+                      res(subs);
+                    },
+                    (_, error) => rej(error)
+                  );
+                });
+              });
+
+              // добавляем подзадачи в общий список
+              subtasks.forEach(sub => {
+                flatList.push({
+                  ...sub,
+                  type: 'subtask',
+                  parentId: section.id,
+                });
+              });
+            }
+
+            resolve(flatList);
           },
           (_, error) => reject(error)
         );

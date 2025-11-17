@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getSections } from '../utils/requests';
 import { syncActions } from '../utils/syncUtils';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { WidgetUniversal } from '../components/WidgetUniversal';
 
 export function ChaptersPage() {
   // Локальное состояние: список разделов (chapters)
@@ -22,14 +23,14 @@ export function ChaptersPage() {
   // Получаем объект базы данных из контекста
   const db = useDatabase();
   const [text, setText] = useState('');
-  const [active, setActive] = useState('tasks'); // "all" | "tasks" | "subtasks"
+  const [active, setActive] = useState('all'); // "all" | "tasks" | "subtasks"
 
   useFocusEffect(
     React.useCallback(() => {
       const fetchData = async () => {
         if (db) {
           try {
-            const data = await SectionRepository.getAll(db);
+            const data = await SectionRepository.getFlatList(db);
             setChapters(data);
             console.log('Получены категории через SQLite:', data);
           } catch (error) {
@@ -46,11 +47,6 @@ export function ChaptersPage() {
     }, [db])
   );
 
-  const handleCreateSection = () => {
-    navigation.navigate('ChapterPage', {
-      chapter: null,
-    });
-  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -75,45 +71,50 @@ export function ChaptersPage() {
         </View>
         {/* Вторая панель панель */}
         <View style={styles.navbar2}>
-          <TouchableOpacity style={styles.iconWrapper} onPress={() => {}}>
-            <Filter width={30} height={30} fill=''/>
+          <TouchableOpacity style={styles.iconWrapper} onPress={() => { }}>
+            <Filter width={30} height={30} fill='' />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconPlus} onPress={() => navigation.navigate('ChapterPage', {chapter: null})}>
+          <TouchableOpacity style={styles.iconPlus} onPress={() => navigation.navigate('ChapterPage', { chapter: null })}>
             <Plus />
           </TouchableOpacity>
           <View style={styles.containerButtons}>
-      {['tasks', 'all', 'subtasks'].map((key) => (
-        <TouchableOpacity
-          key={key}
-          style={[
-            styles.button,
-            active === key && styles.activeButton, // применяем стиль активной
-          ]}
-          onPress={() => setActive(key)}
-        >
-          <Text
-            style={[
-              styles.text,
-              active === key && styles.activeText, // цвет текста для активной
-            ]}
-          >
-            {key === 'all' ? 'Все' : key === 'tasks' ? 'Задачи' : 'Подзадачи'}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
+            {['tasks', 'all', 'subtasks'].map((key) => (
+              <TouchableOpacity
+                key={key}
+                style={[
+                  styles.button,
+                  active === key && styles.activeButton, // применяем стиль активной
+                ]}
+                onPress={() => setActive(key)}
+              >
+                <Text
+                  style={[
+                    styles.text,
+                    active === key && styles.activeText, // цвет текста для активной
+                  ]}
+                >
+                  {key === 'all' ? 'Все' : key === 'tasks' ? 'Задачи' : 'Подзадачи'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
         {/* Задачи */}
         <ScrollView contentContainerStyle={styles.frame}>
-          {chapters.map((obj) => (
-            <Chapter
-              key={obj.id}
-              chapter={obj}
-              setChapters={setChapters}
-              chapters={chapters}
-            // handleUpdateChapter={addSection}
-            />
-          ))}
+          {chapters
+            .filter(obj => {
+              if (active === 'tasks') return obj.type === 'task';
+              if (active === 'subtasks') return obj.type === 'subtask';
+              return true; // для режима "all" показываем всё
+            })
+            .map((obj) => (
+              <WidgetUniversal
+                key={obj.id}
+                chapter={obj}
+                setChapters={setChapters}
+                chapters={chapters}
+              />
+            ))}
         </ScrollView>
       </View>
     </TouchableWithoutFeedback>

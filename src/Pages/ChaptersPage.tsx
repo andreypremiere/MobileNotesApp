@@ -30,7 +30,26 @@ export function ChaptersPage() {
   // новые состояния для фильтров
   const [sortBy, setSortBy] = useState<'deadline' | 'difficulty' | 'priority'>('deadline');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc'); // asc = по возрастанию
+  const [calendarActive, setCalendarActive] = useState(false);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  // вычисляем смещение
+  const firstDay = new Date(year, month, 1).getDay();
+  const offset = (firstDay + 6) % 7; // сдвиг так, чтобы понедельник = 0
 
+  // массив дней месяца
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const monthNames = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+  ];
+
+  const calendarCells = [
+    ...Array(offset).fill(null), // пустые ячейки
+    ...daysArray,
+  ];
 
   useFocusEffect(
     React.useCallback(() => {
@@ -53,6 +72,18 @@ export function ChaptersPage() {
       };
     }, [db])
   );
+
+  // считаем количество задач на каждый день (только задачи, без подзадач)
+  const tasksByDay: Record<number, number> = {};
+  chapters.forEach(ch => {
+    if (ch.type === 'task' && ch.datetime) {   // фильтруем только задачи
+      const d = new Date(ch.datetime);
+      if (d.getMonth() === month && d.getFullYear() === year) {
+        const day = d.getDate();
+        tasksByDay[day] = (tasksByDay[day] || 0) + 1;
+      }
+    }
+  });
 
 
   return (
@@ -80,8 +111,11 @@ export function ChaptersPage() {
               </TouchableOpacity>
             )}
           </View>
-          <TouchableOpacity style={styles.iconWrapper} onPress={() => { }}>
-            <Calendar width={30} height={30} fill='' />
+          <TouchableOpacity
+            style={calendarActive ? styles.iconCalendarActive : styles.iconWrapper}
+            onPress={() => setCalendarActive(!calendarActive)}
+          >
+            <Calendar width={30} height={30} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconWrapper} onPress={() => { }}>
             <Settings width={32} height={32} fill='' />
@@ -187,7 +221,40 @@ export function ChaptersPage() {
         )}
 
         {/* Задачи */}
-        <ScrollView contentContainerStyle={styles.frame}>
+        {calendarActive ? (
+          <View style={styles.calendarContainer}>
+            {/* Заголовок месяц + год */}
+            <Text style={styles.calendarHeader}>
+              {`${monthNames[month]} ${year}`}
+            </Text>
+            <View style={styles.daysGrid}>
+              {calendarCells.map((day, index) => (
+                <View key={index} style={styles.dayTile}>
+                  {day ? (
+                    <>
+                      <Text style={styles.dayNumber}>{day}</Text>
+                      {tasksByDay[day] ? (
+                        <Text style={styles.taskCount}>{tasksByDay[day]} задач</Text>
+                      ) : null}
+                    </>
+                  ) : (
+                    <Text style={styles.dayNumber}></Text> // пустая плитка
+                  )}
+                </View>
+              ))}
+            </View>
+
+            {/* Кнопки листания */}
+            <View style={styles.navMonth}>
+              <TouchableOpacity onPress={() => setCurrentDate(new Date(year, month - 1, 1))}>
+                <Text>Предыдущий месяц</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setCurrentDate(new Date(year, month + 1, 1))}>
+                <Text>Следующий месяц</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (<ScrollView contentContainerStyle={styles.frame}>
           {chapters
             // фильтрация по режиму
             .filter(obj => {
@@ -242,7 +309,7 @@ export function ChaptersPage() {
                 chapters={chapters}
               />
             ))}
-        </ScrollView>
+        </ScrollView>)}
       </View>
     </TouchableWithoutFeedback>
   );
@@ -278,10 +345,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   iconWrapper: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  iconCalendarActive: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    borderRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
   },
   iconPlus: {
     position: 'absolute',
@@ -329,6 +409,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 8,
     flex: 1,
+    marginRight: 3
   },
   input: {
     flex: 1,
@@ -372,5 +453,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginVertical: 8,
+  },
+  calendarContainer: { padding: 10 },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  weekDay: { flex: 1, textAlign: 'center', fontWeight: '600' },
+  daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  dayTile: {
+    width: '14.28%', // 100% / 7 дней
+    alignItems: 'center',
+    marginVertical: 6,
+  },
+  dayNumber: { fontSize: 16, fontWeight: '500' },
+  taskCount: { fontSize: 10, color: '#ff0000ff' },
+  navMonth: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  calendarHeader: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });

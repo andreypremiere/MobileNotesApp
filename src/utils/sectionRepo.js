@@ -1,4 +1,7 @@
 import uuid from 'react-native-uuid';
+import RNFS from 'react-native-fs';
+import Share from 'react-native-share';
+import { PermissionsAndroid, Platform } from 'react-native';
 
 class SectionRepository {
   static async create(db, section, savedId) {
@@ -34,6 +37,167 @@ class SectionRepository {
         );
       }, reject);
     });
+  }
+
+  static async fillDatabaseFromExport(db, items) {
+    // Разделяем на задачи и подзадачи
+    const sections = items.filter(item => item.type === 'task');
+    const subtasks = items.filter(item => item.type === 'subtask');
+
+    console.log(
+      `Импортируем в БД: ${sections.length} sections и ${subtasks.length} subtasks`
+    );
+
+    // // ВАЖНО: у тебя включены foreign_keys и ON DELETE CASCADE,
+    // // поэтому сначала удалим subtasks, потом sections, чтобы не нарушать зависимости.
+    await db.transaction(tx => {
+      // Чистим таблицы
+      tx.executeSql('DELETE FROM subtasks;', []);
+      tx.executeSql('DELETE FROM sections;', []);
+    });
+
+    // Вставляем задачи
+    await db.transaction(tx => {
+      sections.forEach(section => {
+        const {
+          id,
+          title,
+          description,
+          datetime,
+          priority,
+          complexity,
+        } = section;
+
+        const sectionId = id || uuidv4();
+
+        tx.executeSql(
+          `
+          INSERT INTO sections (id, title, description, datetime, priority, complexity)
+          VALUES (?, ?, ?, ?, ?, ?);
+        `,
+          [
+            sectionId,
+            title ?? '',
+            description ?? null,
+            datetime ?? null,
+            priority ?? null,
+            complexity ?? null,
+          ],
+          () => {
+            // console.log('Вставлена section', sectionId);
+          },
+          (_, error) => {
+            console.error('Ошибка вставки section', sectionId, error);
+            // вернуть false, чтобы не прерывать весь транзакшн, если одна упала
+            return false;
+          }
+        );
+      });
+    });
+
+    // Вставляем подзадачи
+    await db.transaction(tx => {
+      subtasks.forEach(subtask => {
+        const {
+          id,
+          title,
+          description,
+          datetime,
+          priority,
+          complexity,
+          section_id,
+          parentId,
+        } = subtask;
+
+        // В json есть и section_id, и parentId — берём section_id как основной,
+        // а если его нет — используем parentId.
+        const linkSectionId = section_id || parentId;
+
+        if (!linkSectionId) {
+          console.warn(
+            'Подзадача без section_id / parentId, пропускаем:',
+            subtask
+          );
+          return;
+        }
+
+        const subtaskId = id || uuidv4();
+
+        tx.executeSql(
+          `
+          INSERT INTO subtasks (id, section_id, title, description, datetime, priority, complexity)
+          VALUES (?, ?, ?, ?, ?, ?, ?);
+        `,
+          [
+            subtaskId,
+            linkSectionId,
+            title ?? '',
+            description ?? null,
+            datetime ?? null,
+            priority ?? null,
+            complexity ?? null,
+          ],
+          () => {
+            // console.log('Вставлена subtask', subtaskId);
+          },
+          (_, error) => {
+            console.error('Ошибка вставки subtask', subtaskId, error);
+            return false;
+          }
+        );
+      });
+    });
+
+    console.log('Импорт в БД завершён');
+  }
+
+  static async importFromDownloads(db) {
+    try {
+    console.log('=== IMPORT START ===');
+
+    // Запрос разрешения только на Android
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        {
+          title: 'Доступ к хранилищу',
+          message: 'Приложению нужен доступ к Загрузкам для импорта заметок',
+          buttonNeutral: 'Спросить позже',
+          buttonNegative: 'Отмена',
+          buttonPositive: 'OK',
+        },
+      );
+
+      if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('Разрешение не выдано');
+        return { ok: false, reason: 'no_permission' };
+      }
+      
+    }
+
+    const path = RNFS.DownloadDirectoryPath + '/notes_export.json';
+    console.log('Путь для импорта:', path);
+
+    const exists = await RNFS.exists(path);
+    if (!exists) {
+      console.log('Файл не найден по пути:', path);
+      return { ok: false, reason: 'not_found', path };
+    }
+
+    const content = await RNFS.readFile(path, 'utf8');
+    console.log('Первые 200 символов файла:', content.slice(0, 200));
+
+    const data = JSON.parse(content);
+    console.log('Успешно распарсили JSON. Элементов:', data.length);
+
+    await SectionRepository.fillFromJson(db, data);
+
+    console.log('=== IMPORT OK ===');
+    return { ok: true, count: data.length };
+  } catch (e) {
+    console.error('Ошибка импорта из Загрузок:', e);
+    return { ok: false, reason: 'error', error: e.message ?? String(e) };
+  }
   }
 
   /**
@@ -213,6 +377,30 @@ class SectionRepository {
         );
       }, reject);
     });
+  }
+
+  static async exportTasks(db) {
+    try {
+      const notes = await SectionRepository.getFlatList(db);
+      const json = JSON.stringify(notes, null, 2);
+
+      // путь к папке Загрузки (Android)
+      const path = RNFS.DownloadDirectoryPath + '/notes_export.json';
+
+      await RNFS.writeFile(path, json, 'utf8');
+      console.log('Файл сохранён:', path);
+
+      await Share.open({
+        url: 'file://' + path,
+        type: 'application/json',
+        title: 'Экспорт заметок',
+      });
+
+      return path;
+    } catch (err) {
+      console.error('Ошибка экспорта:', err);
+      throw err;
+    }
   }
 
   static async createSubtask(db, sectionId, subtask) {

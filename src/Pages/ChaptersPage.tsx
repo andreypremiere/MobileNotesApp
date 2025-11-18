@@ -16,6 +16,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { WidgetUniversal } from '../components/WidgetUniversal';
 import CloseIcon from '../assets/icons/Close.svg';
 
+
+
 export function ChaptersPage() {
   // Локальное состояние: список разделов (chapters)
   const [chapters, setChapters] = useState([])
@@ -45,6 +47,7 @@ export function ChaptersPage() {
     'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
     'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
   ];
+  const [settingsActive, setSettingsActive] = useState(false);
 
   const calendarCells = [
     ...Array(offset).fill(null), // пустые ячейки
@@ -117,10 +120,60 @@ export function ChaptersPage() {
           >
             <Calendar width={30} height={30} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconWrapper} onPress={() => { }}>
-            <Settings width={32} height={32} fill='' />
+          <TouchableOpacity
+            style={settingsActive ? styles.iconFilterActive : styles.iconWrapper}
+            onPress={() => setSettingsActive(!settingsActive)}
+          >
+            <Settings width={32} height={32} />
           </TouchableOpacity>
         </View>
+
+        {/* Панель настроек */}
+        {settingsActive && (
+          <View style={styles.settingsPanel}>
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={async () => {
+                const path = await SectionRepository.exportTasks(db);
+                console.log('Экспортировано в файл:', path);
+              }}
+            >
+              <Text style={styles.settingsText}>Экспорт</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={async () => {
+                try {
+                  const result = await SectionRepository.importFromDownloads(db);
+                  console.log('Импорт завершён', result);
+
+                  if (result?.ok) {
+                    // после успешного импорта перечитываем данные из БД
+                    if (db) {
+                      try {
+                        const data = await SectionRepository.getFlatList(db);
+                        setChapters(data);
+                        console.log('Данные обновлены после импорта:', data);
+                      } catch (error) {
+                        console.error('Ошибка при обновлении данных после импорта:', error);
+                      }
+                    }
+                    // закрываем меню настроек
+                    setSettingsActive(false);
+                  } else {
+                    // можно показать алерт / лог, если нужно
+                    console.log('Импорт завершился с ошибкой или неуспешно', result);
+                  }
+                } catch (e) {
+                  console.error('Ошибка при импорте:', e);
+                }
+              }}
+            >
+              <Text style={styles.settingsText}>Импорт</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {/* Вторая панель панель */}
         {!calendarActive && <View style={styles.navbar2}>
           <TouchableOpacity
@@ -509,4 +562,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
+  settingsPanel: {
+    position: 'absolute',
+    top: 50, // чуть ниже navbar
+    right: 10, // рядом с иконкой Settings
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+    zIndex: 20,
+  },
+  settingsButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  settingsText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+
 });
